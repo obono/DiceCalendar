@@ -29,12 +29,17 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
+
+    private GLSurfaceView   mGLView;
+    private MyRenderer      mRenderer;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,6 +57,20 @@ public class MainActivity extends Activity {
         }
 
         setContentView(R.layout.main);
+        mGLView = (GLSurfaceView) findViewById(R.id.glview);
+        mRenderer = new MyRenderer(this);
+        mGLView.setRenderer(mRenderer);
+        mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
+            mRenderer.setRotation(event.getY(), event.getX(), 0f);
+            mGLView.requestRender();
+        }
+        return true;
     }
 
     public void onClickAbout(View v) {
