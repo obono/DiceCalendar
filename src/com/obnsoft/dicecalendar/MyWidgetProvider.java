@@ -16,10 +16,13 @@
 
 package com.obnsoft.dicecalendar;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.RemoteViews;
 
 public class MyWidgetProvider extends AppWidgetProvider {
 
@@ -31,7 +34,13 @@ public class MyWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager awm, int[] awi) {
         super.onUpdate(context, awm, awi);
-        context.startService(new Intent(context, MyService.class));
+
+        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget);
+        ComponentName cn = new ComponentName(context, MyWidgetProvider.class);
+        Intent intent = new Intent(context, MainActivity.class);
+        rv.setOnClickPendingIntent(R.id.widget_image,
+                PendingIntent.getActivity(context, 0, intent, 0));
+        awm.updateAppWidget(cn, rv);
     }
 
     @Override
