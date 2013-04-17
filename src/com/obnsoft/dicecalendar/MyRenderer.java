@@ -68,27 +68,30 @@ public class MyRenderer implements Renderer {
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
         GLU.gluPerspective(gl, 45f, (float) width / (float) height, 1f, 50f);
+        gl.glMatrixMode(GL10.GL_MODELVIEW);
+        gl.glLoadIdentity();
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-        gl.glMatrixMode(GL10.GL_MODELVIEW);
-
+ 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glLoadIdentity();
 
+        gl.glPushMatrix();
+        gl.glTranslatef(0f, 0f, -3f);
+        gl.glRotatef(mDegX, 1, 0, 0);
+        gl.glRotatef(mDegY, 0, 1, 0);
+        gl.glRotatef(mDegZ, 0, 0, 1);
         for (int i = 0; i < 4; i++) {
             gl.glPushMatrix();
-            gl.glTranslatef(i - 1.5f, 0f, -3f);
-            gl.glRotatef(mDegX, 1, 0, 0);
-            gl.glRotatef(mDegY, 0, 1, 0);
-            gl.glRotatef(mDegZ, 0, 0, 1);
+            gl.glTranslatef(i - 1.5f, 0f, 0f);
             mCube.draw(gl, i);
             gl.glPopMatrix();
         }
+        gl.glPopMatrix();
 
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);

@@ -2,5 +2,7 @@
 <resources>
     <string name="app_code">OBN-A13</string>
     <string name="app_name">Dice Calendar</string>
+    <string name="app_name_small">Dice Calendar (Small)</string>
+    <string name="app_name_large">Dice Calendar (Large)</string>
     <string name="about">Version information</string>
 </resources>

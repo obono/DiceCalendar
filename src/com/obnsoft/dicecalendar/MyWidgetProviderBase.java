@@ -22,18 +22,13 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.widget.RemoteViews;
 
-public class MyWidgetProvider extends AppWidgetProvider {
-
-    private static PixelBuffer  sPixelBuffer;
-    private static MyRenderer   sRenderer;
+public abstract class MyWidgetProviderBase extends AppWidgetProvider {
 
     @Override
     public void onEnabled(Context context) {
         super.onEnabled(context);
-        initalizeBitmap(context);
     }
 
     @Override
@@ -41,43 +36,22 @@ public class MyWidgetProvider extends AppWidgetProvider {
         super.onUpdate(context, awm, awi);
 
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget);
-        ComponentName cn = new ComponentName(context, MyWidgetProvider.class);
-        rv.setImageViewBitmap(R.id.widget_image, drawBitmap(context));
+        ComponentName cn = new ComponentName(context, this.getClass());
+        PixelBuffer buffer = new PixelBuffer(512, 256);
+        MyRenderer renderer = new MyRenderer(context);
+        buffer.setRenderer(renderer);
+        renderer.setRotation(-10f, 0, 0);
+        rv.setImageViewBitmap(R.id.widget_image, buffer.getBitmap());
         Intent intent = new Intent(context, MainActivity.class);
         rv.setOnClickPendingIntent(R.id.widget_image,
                 PendingIntent.getActivity(context, 0, intent, 0));
         awm.updateAppWidget(cn, rv);
+        buffer.finish();
     }
 
     @Override
     public void onDisabled(Context context) {
         super.onDisabled(context);
-        finishBitmap();
-    }
-
-    /*-----------------------------------------------------------------------*/
-
-    private void initalizeBitmap(Context context) {
-        if (sPixelBuffer == null) {
-            sPixelBuffer = new PixelBuffer(512, 256);
-            sRenderer = new MyRenderer(context);
-            sPixelBuffer.setRenderer(sRenderer);
-        }
-    }
-
-    private Bitmap drawBitmap(Context context) {
-        if (sPixelBuffer == null) {
-            initalizeBitmap(context);
-        }
-        return sPixelBuffer.getBitmap();
-    }
-
-    private void finishBitmap() {
-        if (sPixelBuffer != null) {
-            sPixelBuffer.finish();
-            sPixelBuffer = null;
-            sRenderer = null;
-        }
     }
 
 }

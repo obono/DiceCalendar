@@ -49,8 +49,10 @@ public class MainActivity extends Activity {
         Intent intent = getIntent();
         if (AppWidgetManager.ACTION_APPWIDGET_CONFIGURE.equals(intent.getAction())) {
             setResult(RESULT_OK, new Intent().putExtras(intent.getExtras()));
-            if (AppWidgetManager.getInstance(this).getAppWidgetIds(
-                    new ComponentName(this, MyWidgetProvider.class)).length >= 2) {
+            AppWidgetManager awm = AppWidgetManager.getInstance(this);
+            ComponentName cns = new ComponentName(this, MyWidgetProviderSmall.class);
+            ComponentName cnl = new ComponentName(this, MyWidgetProviderLarge.class);
+            if (awm.getAppWidgetIds(cns).length + awm.getAppWidgetIds(cnl).length >= 2) {
                 finish();
                 return;
             }
