@@ -54,8 +54,8 @@ public class MyRenderer implements Renderer {
         gl.glBindTexture(GL10.GL_TEXTURE_2D, buffers[0]);
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.texture);
         GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
         bitmap.recycle();
 
         gl.glEnable(GL10.GL_LIGHTING);
@@ -78,14 +78,16 @@ public class MyRenderer implements Renderer {
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+        gl.glLoadIdentity();
 
         for (int i = 0; i < 4; i++) {
-            gl.glLoadIdentity();
-            gl.glTranslatef((i % 2 - 0.5f) * 1.5f, (i / 2 - 0.5f) * 1.5f, -6f);
+            gl.glPushMatrix();
+            gl.glTranslatef(i - 1.5f, 0f, -3f);
             gl.glRotatef(mDegX, 1, 0, 0);
             gl.glRotatef(mDegY, 0, 1, 0);
             gl.glRotatef(mDegZ, 0, 0, 1);
             mCube.draw(gl, i);
+            gl.glPopMatrix();
         }
 
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
