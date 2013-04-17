@@ -32,15 +32,73 @@ import android.opengl.GLUtils;
 
 public class MyRenderer implements Renderer {
 
-    private Context mContext;
-    private MyCube mCube;
+    private static final float VN = -0.5f;
+    private static final float VP = 0.5f;
+    private static final float[] VERTICES = {
+        VN,VP,VP,   VP,VP,VP,   VN,VN,VP,   VP,VN,VP,   // front
+        VP,VP,VP,   VP,VP,VN,   VP,VN,VP,   VP,VN,VN,   // right
+        VP,VP,VN,   VN,VP,VN,   VP,VN,VN,   VN,VN,VN,   // back
+        VP,VN,VN,   VN,VN,VN,   VP,VN,VP,   VN,VN,VP,   // bottom
+        VN,VN,VN,   VN,VP,VN,   VN,VN,VP,   VN,VP,VP,   // left
+        VN,VP,VN,   VP,VP,VN,   VN,VP,VP,   VP,VP,VP,   // top
+    };
+    private static final float[] NORMALS = {
+        0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   // front
+        1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   // right
+        0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  // back
+        0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  // bottom
+        -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  // left
+        0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   // top
+    };
+    private static final float T0 = 52f / 512f;
+    private static final float T1 = 154f / 512f;
+    private static final float T2 = 256f / 512f;
+    private static final float T3 = 358f / 512f;
+    private static final float T4 = 460f / 512f;
+    private static final float TZ = 50f / 512f;
+    private static final float[] TEXCOORDS = {
+        T0-TZ, T4+TZ,   T0-TZ, T4-TZ,   T0+TZ, T4+TZ,   T0+TZ, T4-TZ, // cube0 Jan/Jul
+        T0-TZ, T3+TZ,   T0-TZ, T3-TZ,   T0+TZ, T3+TZ,   T0+TZ, T3-TZ, // cube0 Feb/Aug
+        T0-TZ, T2+TZ,   T0-TZ, T2-TZ,   T0+TZ, T2+TZ,   T0+TZ, T2-TZ, // cube0 Mar/Sep
+        T1-TZ, T4+TZ,   T1-TZ, T4-TZ,   T1+TZ, T4+TZ,   T1+TZ, T4-TZ, // cube0 Apr/Oct
+        T1-TZ, T3+TZ,   T1-TZ, T3-TZ,   T1+TZ, T3+TZ,   T1+TZ, T3-TZ, // cube0 May/Nov
+        T1-TZ, T2+TZ,   T1-TZ, T2-TZ,   T1+TZ, T2+TZ,   T1+TZ, T2-TZ, // cube0 Jun/Dec
+        T0-TZ, T0-TZ,   T0+TZ, T0-TZ,   T0-TZ, T0+TZ,   T0+TZ, T0+TZ, // cube1 0
+        T1-TZ, T0-TZ,   T1+TZ, T0-TZ,   T1-TZ, T0+TZ,   T1+TZ, T0+TZ, // cube1 1
+        T2-TZ, T0-TZ,   T2+TZ, T0-TZ,   T2-TZ, T0+TZ,   T2+TZ, T0+TZ, // cube1 2
+        T0-TZ, T1-TZ,   T0+TZ, T1-TZ,   T0-TZ, T1+TZ,   T0+TZ, T1+TZ, // cube1 3
+        T1-TZ, T1-TZ,   T1+TZ, T1-TZ,   T1-TZ, T1+TZ,   T1+TZ, T1+TZ, // cube1 4
+        T2-TZ, T1-TZ,   T2+TZ, T1-TZ,   T2-TZ, T1+TZ,   T2+TZ, T1+TZ, // cube1 5
+        T4+TZ, T4+TZ,   T4-TZ, T4+TZ,   T4+TZ, T4-TZ,   T4-TZ, T4-TZ, // cube2 0
+        T3+TZ, T4+TZ,   T3-TZ, T4+TZ,   T3+TZ, T4-TZ,   T3-TZ, T4-TZ, // cube2 1
+        T2+TZ, T4+TZ,   T2-TZ, T4+TZ,   T2+TZ, T4-TZ,   T2-TZ, T4-TZ, // cube2 2
+        T4+TZ, T3+TZ,   T4-TZ, T3+TZ,   T4+TZ, T3-TZ,   T4-TZ, T3-TZ, // cube2 6
+        T3+TZ, T3+TZ,   T3-TZ, T3+TZ,   T3+TZ, T3-TZ,   T3-TZ, T3-TZ, // cube2 7
+        T2+TZ, T3+TZ,   T2-TZ, T3+TZ,   T2+TZ, T3-TZ,   T2-TZ, T3-TZ, // cube2 8
+        T4+TZ, T0-TZ,   T4+TZ, T0+TZ,   T4-TZ, T0-TZ,   T4-TZ, T0+TZ, // cube3 Mon
+        T4+TZ, T1-TZ,   T4+TZ, T1+TZ,   T4-TZ, T1-TZ,   T4-TZ, T1+TZ, // cube3 Tue
+        T4+TZ, T2-TZ,   T4+TZ, T2+TZ,   T4-TZ, T2-TZ,   T4-TZ, T2+TZ, // cube3 Wed
+        T3+TZ, T0-TZ,   T3+TZ, T0+TZ,   T3-TZ, T0-TZ,   T3-TZ, T0+TZ, // cube3 Thu
+        T3+TZ, T1-TZ,   T3+TZ, T1+TZ,   T3-TZ, T1-TZ,   T3-TZ, T1+TZ, // cube3 Fri
+        T3+TZ, T2-TZ,   T3+TZ, T2+TZ,   T3-TZ, T2-TZ,   T3-TZ, T2+TZ, // cube3 Sat/Sun
+    };
+
+    private final Context mContext;
+    private final FloatBuffer mVertexBuffer;
+    private final FloatBuffer mTexCoordBuffer;
+    private final FloatBuffer mNormalBuffer;
+
     private float mDegX;
     private float mDegY;
     private float mDegZ;
 
+    /*-----------------------------------------------------------------------*/
+
     public MyRenderer(Context context) {
         mContext = context;
-        mCube = new MyCube();
+        mVertexBuffer = getFloatBufferFromArray(VERTICES);
+        mNormalBuffer = getFloatBufferFromArray(NORMALS);
+        mTexCoordBuffer = getFloatBufferFromArray(TEXCOORDS);
     }
 
     @Override
@@ -82,13 +140,12 @@ public class MyRenderer implements Renderer {
 
         gl.glPushMatrix();
         gl.glTranslatef(0f, 0f, -3f);
-        gl.glRotatef(mDegX, 1, 0, 0);
-        gl.glRotatef(mDegY, 0, 1, 0);
-        gl.glRotatef(mDegZ, 0, 0, 1);
+        rotateXYZ(gl, mDegX, mDegY, mDegZ);
         for (int i = 0; i < 4; i++) {
             gl.glPushMatrix();
             gl.glTranslatef(i - 1.5f, 0f, 0f);
-            mCube.draw(gl, i);
+            rotateXYZ(gl, 0, 0, 0);
+            drawCube(gl, i);
             gl.glPopMatrix();
         }
         gl.glPopMatrix();
@@ -108,87 +165,6 @@ public class MyRenderer implements Renderer {
 
     /*-----------------------------------------------------------------------*/
 
-    private static final float VN = -0.5f;
-    private static final float VP = 0.5f;
-
-    private static final float[] VERTICES = {
-        VN,VP,VP,   VP,VP,VP,   VN,VN,VP,   VP,VN,VP,   // front
-        VP,VP,VP,   VP,VP,VN,   VP,VN,VP,   VP,VN,VN,   // right
-        VP,VP,VN,   VN,VP,VN,   VP,VN,VN,   VN,VN,VN,   // back
-        VP,VN,VN,   VN,VN,VN,   VP,VN,VP,   VN,VN,VP,   // bottom
-        VN,VN,VN,   VN,VP,VN,   VN,VN,VP,   VN,VP,VP,   // left
-        VN,VP,VN,   VP,VP,VN,   VN,VP,VP,   VP,VP,VP,   // top
-    };
-
-    private static final float[] NORMALS = {
-        0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   // front
-        1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   // right
-        0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  // back
-        0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  // bottom
-        -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  // left
-        0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   // top
-    };
-
-    private static final float T0 = 52f / 512f;
-    private static final float T1 = 154f / 512f;
-    private static final float T2 = 256f / 512f;
-    private static final float T3 = 358f / 512f;
-    private static final float T4 = 460f / 512f;
-    private static final float TZ = 50f / 512f;
-
-    private static final float[] TEXCOORDS = {
-        T0-TZ, T4+TZ,   T0-TZ, T4-TZ,   T0+TZ, T4+TZ,   T0+TZ, T4-TZ, // cube0 Jan/Jul
-        T0-TZ, T3+TZ,   T0-TZ, T3-TZ,   T0+TZ, T3+TZ,   T0+TZ, T3-TZ, // cube0 Feb/Aug
-        T0-TZ, T2+TZ,   T0-TZ, T2-TZ,   T0+TZ, T2+TZ,   T0+TZ, T2-TZ, // cube0 Mar/Sep
-        T1-TZ, T4+TZ,   T1-TZ, T4-TZ,   T1+TZ, T4+TZ,   T1+TZ, T4-TZ, // cube0 Apr/Oct
-        T1-TZ, T3+TZ,   T1-TZ, T3-TZ,   T1+TZ, T3+TZ,   T1+TZ, T3-TZ, // cube0 May/Nov
-        T1-TZ, T2+TZ,   T1-TZ, T2-TZ,   T1+TZ, T2+TZ,   T1+TZ, T2-TZ, // cube0 Jun/Dec
-
-        T0-TZ, T0-TZ,   T0+TZ, T0-TZ,   T0-TZ, T0+TZ,   T0+TZ, T0+TZ, // cube1 0
-        T1-TZ, T0-TZ,   T1+TZ, T0-TZ,   T1-TZ, T0+TZ,   T1+TZ, T0+TZ, // cube1 1
-        T2-TZ, T0-TZ,   T2+TZ, T0-TZ,   T2-TZ, T0+TZ,   T2+TZ, T0+TZ, // cube1 2
-        T0-TZ, T1-TZ,   T0+TZ, T1-TZ,   T0-TZ, T1+TZ,   T0+TZ, T1+TZ, // cube1 3
-        T1-TZ, T1-TZ,   T1+TZ, T1-TZ,   T1-TZ, T1+TZ,   T1+TZ, T1+TZ, // cube1 4
-        T2-TZ, T1-TZ,   T2+TZ, T1-TZ,   T2-TZ, T1+TZ,   T2+TZ, T1+TZ, // cube1 5
-
-        T4+TZ, T4+TZ,   T4-TZ, T4+TZ,   T4+TZ, T4-TZ,   T4-TZ, T4-TZ, // cube2 0
-        T3+TZ, T4+TZ,   T3-TZ, T4+TZ,   T3+TZ, T4-TZ,   T3-TZ, T4-TZ, // cube2 1
-        T2+TZ, T4+TZ,   T2-TZ, T4+TZ,   T2+TZ, T4-TZ,   T2-TZ, T4-TZ, // cube2 2
-        T4+TZ, T3+TZ,   T4-TZ, T3+TZ,   T4+TZ, T3-TZ,   T4-TZ, T3-TZ, // cube2 6
-        T3+TZ, T3+TZ,   T3-TZ, T3+TZ,   T3+TZ, T3-TZ,   T3-TZ, T3-TZ, // cube2 7
-        T2+TZ, T3+TZ,   T2-TZ, T3+TZ,   T2+TZ, T3-TZ,   T2-TZ, T3-TZ, // cube2 8
-
-        T4+TZ, T0-TZ,   T4+TZ, T0+TZ,   T4-TZ, T0-TZ,   T4-TZ, T0+TZ, // cube3 Mon
-        T4+TZ, T1-TZ,   T4+TZ, T1+TZ,   T4-TZ, T1-TZ,   T4-TZ, T1+TZ, // cube3 Tue
-        T4+TZ, T2-TZ,   T4+TZ, T2+TZ,   T4-TZ, T2-TZ,   T4-TZ, T2+TZ, // cube3 Wed
-        T3+TZ, T0-TZ,   T3+TZ, T0+TZ,   T3-TZ, T0-TZ,   T3-TZ, T0+TZ, // cube3 Thu
-        T3+TZ, T1-TZ,   T3+TZ, T1+TZ,   T3-TZ, T1-TZ,   T3-TZ, T1+TZ, // cube3 Fri
-        T3+TZ, T2-TZ,   T3+TZ, T2+TZ,   T3-TZ, T2-TZ,   T3-TZ, T2+TZ, // cube3 Sat/Sun
-    };
-
-    class MyCube {
-
-        private final FloatBuffer mVertexBuffer;
-        private final FloatBuffer mTexCoordBuffer;
-        private final FloatBuffer mNormalBuffer;
-
-        public MyCube() {
-            mVertexBuffer = getFloatBufferFromArray(VERTICES);
-            mNormalBuffer = getFloatBufferFromArray(NORMALS);
-            mTexCoordBuffer = getFloatBufferFromArray(TEXCOORDS);
-        }
-
-        public void draw(GL10 gl, int tex){
-            gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
-            gl.glNormalPointer(GL10.GL_FLOAT, 0, mNormalBuffer);
-            mTexCoordBuffer.position(tex * 48);
-            gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
-            for (int i = 0; i < 6; i++) {
-                gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, i * 4, 4);
-            }
-        }
-    }
-
     private FloatBuffer getFloatBufferFromArray(float[] array) {
         FloatBuffer ret;
         ByteBuffer bb = ByteBuffer.allocateDirect(array.length * 4);
@@ -197,5 +173,21 @@ public class MyRenderer implements Renderer {
         ret.put(array);
         ret.position(0);
         return ret;
+    }
+
+    private void rotateXYZ(GL10 gl, float degX, float degY, float degZ) {
+        gl.glRotatef(degX, 1, 0, 0);
+        gl.glRotatef(degY, 0, 1, 0);
+        gl.glRotatef(degZ, 0, 0, 1);
+    }
+
+    private void drawCube(GL10 gl, int type) {
+        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
+        gl.glNormalPointer(GL10.GL_FLOAT, 0, mNormalBuffer);
+        mTexCoordBuffer.position(type * 48);
+        gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
+        for (int i = 0; i < 6; i++) {
+            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, i * 4, 4);
+        }
     }
 }
