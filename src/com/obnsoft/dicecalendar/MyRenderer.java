@@ -47,9 +47,19 @@ public class MyRenderer implements Renderer {
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         gl.glEnable(GL10.GL_DEPTH_TEST);
         gl.glDepthFunc(GL10.GL_LEQUAL);
+
+        gl.glEnable(GL10.GL_TEXTURE_2D);
+        int[] buffers = new int[1];
+        gl.glGenTextures(1, buffers, 0);
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, buffers[0]);
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.texture);
+        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+        bitmap.recycle();
+
         gl.glEnable(GL10.GL_LIGHTING);
         gl.glEnable(GL10.GL_LIGHT0);
-        gl.glEnable(GL10.GL_TEXTURE_2D);
     }
 
     @Override
@@ -58,28 +68,29 @@ public class MyRenderer implements Renderer {
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
         GLU.gluPerspective(gl, 45f, (float) width / (float) height, 1f, 50f);
-
-        int[] buffers = new int[1];
-        gl.glGenTextures(1, buffers, 0);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, buffers[0]);
-
-        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.texture);
-        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
-        bitmap.recycle();
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
-        gl.glLoadIdentity();
-        gl.glTranslatef(0, 0, -3f);
-        gl.glRotatef(mDegX, 1, 0, 0);
-        gl.glRotatef(mDegY, 0, 1, 0);
-        gl.glRotatef(mDegZ, 0, 0, 1);
-        mCube.draw(gl);
+
+        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
+        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+
+        for (int i = 0; i < 4; i++) {
+            gl.glLoadIdentity();
+            gl.glTranslatef((i % 2 - 0.5f) * 1.5f, (i / 2 - 0.5f) * 1.5f, -6f);
+            gl.glRotatef(mDegX, 1, 0, 0);
+            gl.glRotatef(mDegY, 0, 1, 0);
+            gl.glRotatef(mDegZ, 0, 0, 1);
+            mCube.draw(gl, i);
+        }
+
+        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
+        gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
     }
 
     /*-----------------------------------------------------------------------*/
@@ -92,96 +103,94 @@ public class MyRenderer implements Renderer {
 
     /*-----------------------------------------------------------------------*/
 
+    private static final float VN = -0.5f;
+    private static final float VP = 0.5f;
+
+    private static final float[] VERTICES = {
+        VN,VP,VP,   VP,VP,VP,   VN,VN,VP,   VP,VN,VP,   // front
+        VN,VN,VP,   VP,VN,VP,   VN,VN,VN,   VP,VN,VN,   // bottom
+        VP,VN,VP,   VP,VP,VP,   VP,VN,VN,   VP,VP,VN,   // right
+        VN,VN,VN,   VN,VP,VN,   VN,VN,VP,   VN,VP,VP,   // left
+        VN,VP,VN,   VP,VP,VN,   VN,VP,VP,   VP,VP,VP,   // top
+        VN,VN,VN,   VP,VN,VN,   VN,VP,VN,   VP,VP,VN,   // back
+    };
+
+    private static final float[] NORMALS = {
+        0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   // front
+        0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,   // bottom
+        1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   // right
+        -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  // left
+        0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   // top
+        0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  // back
+    };
+
+    private static final float T0 = 52f / 512f;
+    private static final float T1 = 154f / 512f;
+    private static final float T2 = 256f / 512f;
+    private static final float T3 = 358f / 512f;
+    private static final float T4 = 460f / 512f;
+    private static final float TZ = 50f / 512f;
+
+    private static final float[] TEXCOORDS = {
+        T0-TZ, T4+TZ,   T0-TZ, T4-TZ,   T0+TZ, T4+TZ,   T0+TZ, T4-TZ, // cube0 Jan/Jul
+        T0-TZ, T3+TZ,   T0-TZ, T3-TZ,   T0+TZ, T3+TZ,   T0+TZ, T3-TZ, // cube0 Feb/Aug
+        T0-TZ, T2+TZ,   T0-TZ, T2-TZ,   T0+TZ, T2+TZ,   T0+TZ, T2-TZ, // cube0 Mar/Sep
+        T1-TZ, T4+TZ,   T1-TZ, T4-TZ,   T1+TZ, T4+TZ,   T1+TZ, T4-TZ, // cube0 Apr/Oct
+        T1-TZ, T3+TZ,   T1-TZ, T3-TZ,   T1+TZ, T3+TZ,   T1+TZ, T3-TZ, // cube0 May/Nov
+        T1-TZ, T2+TZ,   T1-TZ, T2-TZ,   T1+TZ, T2+TZ,   T1+TZ, T2-TZ, // cube0 Jun/Dec
+
+        T0-TZ, T0-TZ,   T0+TZ, T0-TZ,   T0-TZ, T0+TZ,   T0+TZ, T0+TZ, // cube1 0
+        T1-TZ, T0-TZ,   T1+TZ, T0-TZ,   T1-TZ, T0+TZ,   T1+TZ, T0+TZ, // cube1 1
+        T2-TZ, T0-TZ,   T2+TZ, T0-TZ,   T2-TZ, T0+TZ,   T2+TZ, T0+TZ, // cube1 2
+        T0-TZ, T1-TZ,   T0+TZ, T1-TZ,   T0-TZ, T1+TZ,   T0+TZ, T1+TZ, // cube1 3
+        T1-TZ, T1-TZ,   T1+TZ, T1-TZ,   T1-TZ, T1+TZ,   T1+TZ, T1+TZ, // cube1 4
+        T2-TZ, T1-TZ,   T2+TZ, T1-TZ,   T2-TZ, T1+TZ,   T2+TZ, T1+TZ, // cube1 5
+
+        T4+TZ, T4+TZ,   T4-TZ, T4+TZ,   T4+TZ, T4-TZ,   T4-TZ, T4-TZ, // cube2 0
+        T3+TZ, T4+TZ,   T3-TZ, T4+TZ,   T3+TZ, T4-TZ,   T3-TZ, T4-TZ, // cube2 1
+        T2+TZ, T4+TZ,   T2-TZ, T4+TZ,   T2+TZ, T4-TZ,   T2-TZ, T4-TZ, // cube2 2
+        T4+TZ, T3+TZ,   T4-TZ, T3+TZ,   T4+TZ, T3-TZ,   T4-TZ, T3-TZ, // cube2 6
+        T3+TZ, T3+TZ,   T3-TZ, T3+TZ,   T3+TZ, T3-TZ,   T3-TZ, T3-TZ, // cube2 7
+        T2+TZ, T3+TZ,   T2-TZ, T3+TZ,   T2+TZ, T3-TZ,   T2-TZ, T3-TZ, // cube2 8
+
+        T4+TZ, T0-TZ,   T4+TZ, T0+TZ,   T4-TZ, T0-TZ,   T4-TZ, T0+TZ, // cube3 Mon
+        T4+TZ, T1-TZ,   T4+TZ, T1+TZ,   T4-TZ, T1-TZ,   T4-TZ, T1+TZ, // cube3 Tue
+        T4+TZ, T2-TZ,   T4+TZ, T2+TZ,   T4-TZ, T2-TZ,   T4-TZ, T2+TZ, // cube3 Wed
+        T3+TZ, T0-TZ,   T3+TZ, T0+TZ,   T3-TZ, T0-TZ,   T3-TZ, T0+TZ, // cube3 Thu
+        T3+TZ, T1-TZ,   T3+TZ, T1+TZ,   T3-TZ, T1-TZ,   T3-TZ, T1+TZ, // cube3 Fri
+        T3+TZ, T2-TZ,   T3+TZ, T2+TZ,   T3-TZ, T2-TZ,   T3-TZ, T2+TZ, // cube3 Sat/Sun
+    };
+
     class MyCube {
 
-        private static final float T0 = 52f / 512f;
-        private static final float T1 = 154f / 512f;
-        private static final float T2 = 256f / 512f;
-        private static final float T3 = 358f / 512f;
-        private static final float T4 = 460f / 512f;
-        private static final float TZ = 50f / 512f;
-
         private final FloatBuffer mVertexBuffer;
-        private final FloatBuffer mTextureBuffer;
+        private final FloatBuffer mTexCoordBuffer;
+        private final FloatBuffer mNormalBuffer;
 
         public MyCube() {
-            float vertices[] = {
-                // front
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                // back
-                -0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                -0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                // left
-                -0.5f, -0.5f, 0.5f,
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f,
-                // right
-                0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, -0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,
-                // top
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                // bottom
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                -0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f
-            };
-            ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
-            vbb.order(ByteOrder.nativeOrder());
-            mVertexBuffer = vbb.asFloatBuffer();
-            mVertexBuffer.put(vertices);
-            mVertexBuffer.position(0);
-
-            float[] uv = {
-                    T0-TZ, T0-TZ,   T0-TZ, T0+TZ,   T0+TZ, T0-TZ,   T0+TZ, T0+TZ,
-                    T1-TZ, T0-TZ,   T1-TZ, T0+TZ,   T1+TZ, T0-TZ,   T1+TZ, T0+TZ,
-                    T2-TZ, T0-TZ,   T2-TZ, T0+TZ,   T2+TZ, T0-TZ,   T2+TZ, T0+TZ,
-                    T0-TZ, T1-TZ,   T0-TZ, T1+TZ,   T0+TZ, T1-TZ,   T0+TZ, T1+TZ,
-                    T1-TZ, T1-TZ,   T1-TZ, T1+TZ,   T1+TZ, T1-TZ,   T1+TZ, T1+TZ,
-                    T2-TZ, T1-TZ,   T2-TZ, T1+TZ,   T2+TZ, T1-TZ,   T2+TZ, T1+TZ,
-            };
-            ByteBuffer bb = ByteBuffer.allocateDirect(uv.length * 4);
-            bb.order(ByteOrder.nativeOrder());
-            mTextureBuffer = bb.asFloatBuffer();
-            mTextureBuffer.put(uv);
-            mTextureBuffer.position(0);
+            mVertexBuffer = getFloatBufferFromArray(VERTICES);
+            mNormalBuffer = getFloatBufferFromArray(NORMALS);
+            mTexCoordBuffer = getFloatBufferFromArray(TEXCOORDS);
         }
 
-        public void draw(GL10 gl){
-            gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        public void draw(GL10 gl, int tex){
             gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
-            gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-            gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTextureBuffer);
-            // Front
-            gl.glNormal3f(0, 0, 1.0f);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
-            // Back
-            gl.glNormal3f(0, 0, -1.0f);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 4, 4);
-            // Left
-            gl.glNormal3f(-1.0f, 0, 0);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 8, 4);
-            // Right
-            gl.glNormal3f(1.0f, 0, 0);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 12, 4);
-            // Top
-            gl.glNormal3f(0, 1.0f, 0);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 16, 4);
-            // Right
-            gl.glNormal3f(0, -1.0f, 0);
-            gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 20, 4);
+            gl.glNormalPointer(GL10.GL_FLOAT, 0, mNormalBuffer);
+            mTexCoordBuffer.position(tex * 48);
+            gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
+            for (int i = 0; i < 6; i++) {
+                gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, i * 4, 4);
+            }
         }
     }
 
+    private FloatBuffer getFloatBufferFromArray(float[] array) {
+        FloatBuffer ret;
+        ByteBuffer bb = ByteBuffer.allocateDirect(array.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        ret = bb.asFloatBuffer();
+        ret.put(array);
+        ret.position(0);
+        return ret;
+    }
 }
