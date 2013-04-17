@@ -113,20 +113,20 @@ public class MyRenderer implements Renderer {
 
     private static final float[] VERTICES = {
         VN,VP,VP,   VP,VP,VP,   VN,VN,VP,   VP,VN,VP,   // front
-        VN,VN,VP,   VP,VN,VP,   VN,VN,VN,   VP,VN,VN,   // bottom
-        VP,VN,VP,   VP,VP,VP,   VP,VN,VN,   VP,VP,VN,   // right
+        VP,VP,VP,   VP,VP,VN,   VP,VN,VP,   VP,VN,VN,   // right
+        VP,VP,VN,   VN,VP,VN,   VP,VN,VN,   VN,VN,VN,   // back
+        VP,VN,VN,   VN,VN,VN,   VP,VN,VP,   VN,VN,VP,   // bottom
         VN,VN,VN,   VN,VP,VN,   VN,VN,VP,   VN,VP,VP,   // left
         VN,VP,VN,   VP,VP,VN,   VN,VP,VP,   VP,VP,VP,   // top
-        VN,VN,VN,   VP,VN,VN,   VN,VP,VN,   VP,VP,VN,   // back
     };
 
     private static final float[] NORMALS = {
         0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   0f,0f,1f,   // front
-        0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,   // bottom
         1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   1f,0f,0f,   // right
+        0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  // back
+        0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  0f,-1f,0f,  // bottom
         -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  // left
         0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   // top
-        0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  0f,0f,-1f,  // back
     };
 
     private static final float T0 = 52f / 512f;

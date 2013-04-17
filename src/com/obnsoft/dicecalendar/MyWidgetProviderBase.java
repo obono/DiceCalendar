@@ -22,6 +22,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.widget.RemoteViews;
 
 public abstract class MyWidgetProviderBase extends AppWidgetProvider {
@@ -41,7 +42,12 @@ public abstract class MyWidgetProviderBase extends AppWidgetProvider {
         MyRenderer renderer = new MyRenderer(context);
         buffer.setRenderer(renderer);
         renderer.setRotation(-10f, 0, 0);
-        rv.setImageViewBitmap(R.id.widget_image, buffer.getBitmap());
+        Bitmap bitmap = buffer.getBitmap();
+        if (bitmap != null) {
+            rv.setImageViewBitmap(R.id.widget_image, buffer.getBitmap());
+        } else {
+            rv.setImageViewResource(R.id.widget_image, R.drawable.icon);
+        }
         Intent intent = new Intent(context, MainActivity.class);
         rv.setOnClickPendingIntent(R.id.widget_image,
                 PendingIntent.getActivity(context, 0, intent, 0));

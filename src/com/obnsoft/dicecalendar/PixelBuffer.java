@@ -48,7 +48,6 @@ public class PixelBuffer {
         mWidth = width;
         mHeight = height;
         mThreadOwner = Thread.currentThread().getName();
-        mBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
 
         int[] version = new int[2];
         int[] attribList = {
@@ -57,19 +56,32 @@ public class PixelBuffer {
             EGL10.EGL_NONE
         };
 
-        // No error checking performed, minimum required code to elucidate logic
         mEGL = (EGL10) EGLContext.getEGL();
         mEGLDisplay = mEGL.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-        mEGL.eglInitialize(mEGLDisplay, version);
+        if (!mEGL.eglInitialize(mEGLDisplay, version)) {
+            return;
+        }
         mEGLConfig = chooseConfig(); // Choosing a config is a little more complicated
+        if (mEGLConfig == null) {
+            return;
+        }
         mEGLContext = mEGL.eglCreateContext(mEGLDisplay, mEGLConfig, EGL10.EGL_NO_CONTEXT, null);
+        if (mEGLContext == EGL10.EGL_NO_CONTEXT) {
+            return;
+        }
         mEGLSurface = mEGL.eglCreatePbufferSurface(mEGLDisplay, mEGLConfig, attribList);
-        mEGL.eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext);
+        if (mEGLSurface == EGL10.EGL_NO_SURFACE) {
+            return;
+        }
+        if (!mEGL.eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext)) {
+            return;
+        }
         mGL = (GL10) mEGLContext.getGL();
+        mBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
     }
 
     public void setRenderer(GLSurfaceView.Renderer renderer) {
-        if (checkThread()) {
+        if (mGL != null && checkThread()) {
             mRenderer = renderer;
             mRenderer.onSurfaceCreated(mGL, mEGLConfig);
             mRenderer.onSurfaceChanged(mGL, mWidth, mHeight);
@@ -77,7 +89,7 @@ public class PixelBuffer {
     }
 
     public Bitmap getBitmap() {
-        if (checkThread() && mRenderer != null) {
+        if (mRenderer != null && checkThread()) {
             mRenderer.onDrawFrame(mGL);
             convertToBitmap(mGL, mBitmap);
         }
@@ -124,14 +136,17 @@ public class PixelBuffer {
             EGL10.EGL_NONE
         };
 
-        // No error checking performed, minimum required code to elucidate logic
         // Expand on this logic to be more selective in choosing a configuration
         int[] numConfig = new int[1];
         mEGL.eglChooseConfig(mEGLDisplay, attribList, null, 0, numConfig);
         int configSize = numConfig[0];
-        EGLConfig[] configs = new EGLConfig[configSize];
-        mEGL.eglChooseConfig(mEGLDisplay, attribList, configs, configSize, numConfig);
-        return configs[0];  // Best match is probably the first configuration
+        if (configSize > 0) {
+            EGLConfig[] configs = new EGLConfig[configSize];
+            if (mEGL.eglChooseConfig(mEGLDisplay, attribList, configs, configSize, numConfig)) {
+                return configs[0]; // Best match is probably the first configuration
+            }
+        }
+        return null;
     }
 
     private void convertToBitmap(GL10 gl, Bitmap bitmap) {
