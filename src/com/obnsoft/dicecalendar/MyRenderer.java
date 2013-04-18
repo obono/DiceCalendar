@@ -27,7 +27,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView.Renderer;
-import android.opengl.GLU;
 import android.opengl.GLUtils;
 
 public class MyRenderer implements Renderer {
@@ -82,20 +81,21 @@ public class MyRenderer implements Renderer {
         T3+TZ, T1-TZ,   T3+TZ, T1+TZ,   T3-TZ, T1-TZ,   T3-TZ, T1+TZ, // cube3 Fri
         T3+TZ, T2-TZ,   T3+TZ, T2+TZ,   T3-TZ, T2-TZ,   T3-TZ, T2+TZ, // cube3 Sat/Sun
     };
+    private static final int BYTES_PAR_FLOAT = 4;
 
     private final Context mContext;
+    private final CubesState mState;
+    private final boolean mIsWidget;
     private final FloatBuffer mVertexBuffer;
     private final FloatBuffer mTexCoordBuffer;
     private final FloatBuffer mNormalBuffer;
 
-    private float mDegX;
-    private float mDegY;
-    private float mDegZ;
-
     /*-----------------------------------------------------------------------*/
 
-    public MyRenderer(Context context) {
+    public MyRenderer(Context context, CubesState state, boolean isWidget) {
         mContext = context;
+        mState = state;
+        mIsWidget = isWidget;
         mVertexBuffer = getFloatBufferFromArray(VERTICES);
         mNormalBuffer = getFloatBufferFromArray(NORMALS);
         mTexCoordBuffer = getFloatBufferFromArray(TEXCOORDS);
@@ -125,7 +125,15 @@ public class MyRenderer implements Renderer {
         gl.glViewport(0, 0, width, height);
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
-        GLU.gluPerspective(gl, 45f, (float) width / (float) height, 1f, 50f);
+        float aspect = (float) width / (float) height;
+        float rangeX = 0.5f;
+        float rangeY = 0.5f;
+        if (mIsWidget || aspect < 1f) {
+            rangeY /= aspect;
+        } else {
+            rangeX *= aspect;
+        }
+        gl.glFrustumf(-rangeX, rangeX, -rangeY, rangeY, 2f, 50f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
     }
@@ -139,14 +147,10 @@ public class MyRenderer implements Renderer {
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 
         gl.glPushMatrix();
-        gl.glTranslatef(0f, 0f, -3f);
-        rotateXYZ(gl, mDegX, mDegY, mDegZ);
-        for (int i = 0; i < 4; i++) {
-            gl.glPushMatrix();
-            gl.glTranslatef(i - 1.5f, 0f, 0f);
-            rotateXYZ(gl, 0, 0, 0);
-            drawCube(gl, i);
-            gl.glPopMatrix();
+        if (mState.mIsEach) {
+            drawEachCube(gl, mState.mFocusCube);
+        } else {
+            drawAllCubes(gl);
         }
         gl.glPopMatrix();
 
@@ -157,22 +161,32 @@ public class MyRenderer implements Renderer {
 
     /*-----------------------------------------------------------------------*/
 
-    public void setRotation(float degX, float degY, float degZ) {
-        mDegX = degX;
-        mDegY = degY;
-        mDegZ = degZ;
-    }
-
-    /*-----------------------------------------------------------------------*/
-
     private FloatBuffer getFloatBufferFromArray(float[] array) {
         FloatBuffer ret;
-        ByteBuffer bb = ByteBuffer.allocateDirect(array.length * 4);
+        ByteBuffer bb = ByteBuffer.allocateDirect(array.length * BYTES_PAR_FLOAT);
         bb.order(ByteOrder.nativeOrder());
         ret = bb.asFloatBuffer();
         ret.put(array);
         ret.position(0);
         return ret;
+    }
+
+    private void drawEachCube(GL10 gl, int type) {
+        gl.glTranslatef(0f, 0f, -3f);
+        rotateXYZ(gl, mState.mCubeDegX[type], mState.mCubeDegY[type], mState.mCubeDegZ[type]);
+        drawCube(gl, type);
+    }
+
+    private void drawAllCubes(GL10 gl) {
+        gl.glTranslatef(0f, 0f, -9f);
+        rotateXYZ(gl, mState.mBaseDegX, mState.mBaseDegY, 0);
+        for (int i = 0; i < 4; i++) {
+            gl.glPushMatrix();
+            gl.glTranslatef(mState.mCubePos[i], 0f, 0f);
+            rotateXYZ(gl, mState.mCubeDegX[i], mState.mCubeDegY[i], mState.mCubeDegZ[i]);
+            drawCube(gl, i);
+            gl.glPopMatrix();
+        }
     }
 
     private void rotateXYZ(GL10 gl, float degX, float degY, float degZ) {

@@ -34,18 +34,20 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
     private GLSurfaceView   mGLView;
+    private CubesState      mState;
     private MyRenderer      mRenderer;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        /*  Control launching to avoid double widgets.  */
+        /*  If the second (or more) widget is placed, exit immediately.  */
         Intent intent = getIntent();
         if (AppWidgetManager.ACTION_APPWIDGET_CONFIGURE.equals(intent.getAction())) {
             setResult(RESULT_OK, new Intent().putExtras(intent.getExtras()));
@@ -60,19 +62,30 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.main);
         mGLView = (GLSurfaceView) findViewById(R.id.glview);
-        mRenderer = new MyRenderer(this);
+        mState = new CubesState(this);
+        mRenderer = new MyRenderer(this, mState, false);
         mGLView.setRenderer(mRenderer);
         mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        mGLView.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent e) {
+                float w = mGLView.getWidth();
+                float h = mGLView.getHeight();
+                float s = Math.min(w, h);
+                float x = (e.getX() - w / 2) / s;
+                float y = (h / 2 - e.getY()) / s;
+                if (mState.onTouchEvent(e.getActionMasked(), x, y)) {
+                    mGLView.requestRender();
+                }
+                return true;
+            }
+        });
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
-            mRenderer.setRotation(event.getY(), event.getX(), 0f);
-            mGLView.requestRender();
-        }
-        return true;
+    protected void onPause() {
+        super.onPause();
+        mState.save();
     }
 
     public void onClickAbout(View v) {

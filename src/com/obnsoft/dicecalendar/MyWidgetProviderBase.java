@@ -39,9 +39,8 @@ public abstract class MyWidgetProviderBase extends AppWidgetProvider {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget);
         ComponentName cn = new ComponentName(context, this.getClass());
         PixelBuffer buffer = new PixelBuffer(512, 256);
-        MyRenderer renderer = new MyRenderer(context);
+        MyRenderer renderer = new MyRenderer(context, new CubesState(context), true);
         buffer.setRenderer(renderer);
-        renderer.setRotation(-10f, 0, 0);
         Bitmap bitmap = buffer.getBitmap();
         if (bitmap != null) {
             rv.setImageViewBitmap(R.id.widget_image, buffer.getBitmap());
