@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.MotionEvent;
 
 public class CubesState {
@@ -49,6 +48,7 @@ public class CubesState {
     private float mTouchX;
     private float mTouchY;
     private boolean mMoveMode;
+    private boolean mCameraMode;
     private int mRotateMode;
     private boolean mIsDirty;
 
@@ -59,12 +59,17 @@ public class CubesState {
         mIsEach = false;
         mFocusCube = FOCUS_NONE;
         mMoveMode = false;
+        mCameraMode = false;
         mRotateMode = ROTATE_NONE;
     }
 
     public boolean onTouchEvent(int action, float x, float y) {
-        Log.e("HOGE", "onTouchEvent" + action + " " + x + "," + y);
         return (mIsEach) ? rotateCube(action, x, y) : adjustCubes(action, x, y);
+    }
+
+    public boolean placeAuto() {
+        arrangeToday();
+        return false;
     }
 
     public boolean save() {
@@ -80,6 +85,7 @@ public class CubesState {
 
     private boolean rotateCube(int action, float x, float y) {
         boolean ret = false;
+
         switch (action) {
         case MotionEvent.ACTION_DOWN:
             if (Math.abs(x) < 0.25f) {
@@ -94,46 +100,61 @@ public class CubesState {
             float deg;
             switch (mRotateMode) {
             case ROTATE_X:
-                mCubeDegX[mFocusCube] += (mTouchY - y) * 135f;
+                deg = (mTouchY - y) * 135f;
+                mCubeDegX[mFocusCube] += deg;
                 mTouchY = y;
                 ret = true;
                 break;
             case ROTATE_Y:
                 deg = (mTouchX - x) * 135f;
                 switch (Math.round(mCubeDegX[mFocusCube] / 90f)) {
-                case 0: mCubeDegY[mFocusCube] -= deg; break;
-                case 1: mCubeDegZ[mFocusCube] += deg; break;
-                case 2: mCubeDegY[mFocusCube] += deg; break;
-                case 3: mCubeDegZ[mFocusCube] -= deg; break;
+                    case 0: mCubeDegY[mFocusCube] -= deg; break;
+                    case 1: mCubeDegZ[mFocusCube] += deg; break;
+                    case 2: mCubeDegY[mFocusCube] += deg; break;
+                    case 3: mCubeDegZ[mFocusCube] -= deg; break;
                 }
                 mTouchX = x;
                 ret = true;
                 break;
             case ROTATE_Z:
-                deg = (mTouchX - x) * 135f;
+                deg = (float) Math.toDegrees(Math.atan2(mTouchY, mTouchX) - Math.atan2(y, x));
                 switch (Math.round(mCubeDegX[mFocusCube] / 90f)) {
-                case 0: mCubeDegZ[mFocusCube] -= deg; break;
-                case 1: mCubeDegY[mFocusCube] += deg; break;
-                case 2: mCubeDegZ[mFocusCube] += deg; break;
-                case 3: mCubeDegY[mFocusCube] -= deg; break;
+                    case 0: mCubeDegZ[mFocusCube] -= deg; break;
+                    case 1: mCubeDegY[mFocusCube] += deg; break;
+                    case 2: mCubeDegZ[mFocusCube] += deg; break;
+                    case 3: mCubeDegY[mFocusCube] -= deg; break;
                 }
                 mTouchX = x;
+                mTouchY = y;
                 ret = true;
                 break;
             }
             break;
         case MotionEvent.ACTION_UP:
             if (mRotateMode == ROTATE_NONE) {
-                mIsEach = false;
+                if (Math.abs(x) < 0.25f && Math.abs(y) < 0.25f) {
+                    mIsEach = false;
+                    mFocusCube = FOCUS_NONE;
+                    ret = true;
+                }
             } else {
-                mCubeDegX[mFocusCube] = Math.round(mCubeDegX[mFocusCube] / 90f) % 4 * 90f;
-                mCubeDegY[mFocusCube] = Math.round(mCubeDegY[mFocusCube] / 90f) % 4 * 90f;
-                mCubeDegZ[mFocusCube] = Math.round(mCubeDegZ[mFocusCube] / 90f) % 4 * 90f;
+                int degX = Math.round(mCubeDegX[mFocusCube] / 90f);
+                int degY = Math.round(mCubeDegY[mFocusCube] / 90f);
+                int degZ = Math.round(mCubeDegZ[mFocusCube] / 90f);
+                switch (degY & 3) {
+                    case 1: degZ += degX; degX = 0; break;
+                    case 2: degX += 2; degZ += 2; degY = 0; break;
+                    case 3: degZ -= degX; degX = 0; break;
+                }
+                mCubeDegX[mFocusCube] = (degX & 3) * 90f;
+                mCubeDegY[mFocusCube] = (degY & 3) * 90f;
+                mCubeDegZ[mFocusCube] = (degZ & 3) * 90f;
                 mIsDirty = true;
+                ret = true;
             }
-            ret = true;
             break;
         }
+
         return ret;
     }
 
@@ -143,12 +164,19 @@ public class CubesState {
 
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            for (int i = 0; i < 4; i++) {
-                if (Math.abs(mCubePos[i] - pos) < 0.5f) {
-                    mTouchX = x;
-                    mFocusCube = i;
-                    break;
+            if (Math.abs(x) < 0.5f && Math.abs(y) < 0.125f) {
+                for (int i = 0; i < 4; i++) {
+                    if (Math.abs(mCubePos[i] - pos) < 0.5f) {
+                        mTouchX = x;
+                        mFocusCube = i;
+                        ret = true;
+                        break;
+                    }
                 }
+            } else if (Math.abs(y + 0.25f) < 0.125f) {
+                mCameraMode = true;
+                mTouchX = x;
+                mTouchY = y;
             }
             break;
         case MotionEvent.ACTION_MOVE:
@@ -165,22 +193,44 @@ public class CubesState {
                 }
                 ret = true;
             }
+            if (mCameraMode) {
+                mBaseDegX += (mTouchY - y) * 90f;
+                mBaseDegY += (x - mTouchX) * 90f;
+                if (mBaseDegX < -20f) mBaseDegX = -20f;
+                if (mBaseDegX > 20f)  mBaseDegX = 20f;
+                if (mBaseDegY < -20f) mBaseDegY = -20f;
+                if (mBaseDegY > 20f)  mBaseDegY = 20f;
+                mTouchX = x;
+                mTouchY = y;
+                ret = true;
+            }
             break;
         case MotionEvent.ACTION_UP:
             if (mFocusCube != FOCUS_NONE) {
                 if (mMoveMode) {
                     mCubePos[mFocusCube] = Math.round(mCubePos[mFocusCube] - 0.5f) + 0.5f;
+                    if (mCubePos[mFocusCube] < -1.5f) mCubePos[mFocusCube] = -1.5f;
+                    if (mCubePos[mFocusCube] > 1.5f)  mCubePos[mFocusCube] = 1.5f;
                     mIsDirty = true;
                     mMoveMode = false;
+                    mFocusCube = FOCUS_NONE;
                 } else {
                     mIsEach = true;
                 }
                 ret = true;
             }
+            if (mCameraMode) {
+                mIsDirty = true;
+                mCameraMode = false;
+            }
             break;
         }
 
         return ret;
+    }
+
+    private void arrangeToday() {
+        
     }
 
     private boolean loadState() {

@@ -181,8 +181,9 @@ public class MyRenderer implements Renderer {
         gl.glTranslatef(0f, 0f, -9f);
         rotateXYZ(gl, mState.mBaseDegX, mState.mBaseDegY, 0);
         for (int i = 0; i < 4; i++) {
+            float fl = (i == mState.mFocusCube) ? 0.25f : 0f;
             gl.glPushMatrix();
-            gl.glTranslatef(mState.mCubePos[i], 0f, 0f);
+            gl.glTranslatef(mState.mCubePos[i], fl, fl);
             rotateXYZ(gl, mState.mCubeDegX[i], mState.mCubeDegY[i], mState.mCubeDegZ[i]);
             drawCube(gl, i);
             gl.glPopMatrix();
