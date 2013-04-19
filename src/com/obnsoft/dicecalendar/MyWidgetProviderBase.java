@@ -16,47 +16,17 @@
 
 package com.obnsoft.dicecalendar;
 
-import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.widget.RemoteViews;
 
 public abstract class MyWidgetProviderBase extends AppWidgetProvider {
 
     @Override
-    public void onEnabled(Context context) {
-        super.onEnabled(context);
-    }
-
-    @Override
     public void onUpdate(Context context, AppWidgetManager awm, int[] awi) {
         super.onUpdate(context, awm, awi);
-
-        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget);
-        ComponentName cn = new ComponentName(context, this.getClass());
-        PixelBuffer buffer = new PixelBuffer(512, 256);
-        MyRenderer renderer = new MyRenderer(context, new CubesState(context), true);
-        buffer.setRenderer(renderer);
-        Bitmap bitmap = buffer.getBitmap();
-        if (bitmap != null) {
-            rv.setImageViewBitmap(R.id.widget_image, buffer.getBitmap());
-        } else {
-            rv.setImageViewResource(R.id.widget_image, R.drawable.icon);
-        }
-        Intent intent = new Intent(context, MainActivity.class);
-        rv.setOnClickPendingIntent(R.id.widget_image,
-                PendingIntent.getActivity(context, 0, intent, 0));
-        awm.updateAppWidget(cn, rv);
-        buffer.finish();
-    }
-
-    @Override
-    public void onDisabled(Context context) {
-        super.onDisabled(context);
+        context.startService(new Intent(context, MyService.class));
     }
 
 }

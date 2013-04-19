@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.main);
         mGLView = (GLSurfaceView) findViewById(R.id.glview);
-        mState = new CubesState(this);
+        mState = ((MyApplication) getApplication()).getCubesState();
         mRenderer = new MyRenderer(this, mState, false);
         mGLView.setRenderer(mRenderer);
         mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -86,6 +86,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         mState.save();
+        startService(new Intent(this, MyService.class));
     }
 
     public void onClickAbout(View v) {
