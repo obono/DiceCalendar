@@ -84,6 +84,9 @@ public class CubesState {
     /*-----------------------------------------------------------------------*/
 
     private boolean rotateCube(int action, float x, float y) {
+        int degX = Math.round(mCubeDegX[mFocusCube] / 90f);
+        int degY = Math.round(mCubeDegY[mFocusCube] / 90f);
+        int degZ = Math.round(mCubeDegZ[mFocusCube] / 90f);
         boolean ret = false;
 
         switch (action) {
@@ -107,22 +110,24 @@ public class CubesState {
                 break;
             case ROTATE_Y:
                 deg = (mTouchX - x) * 135f;
-                switch (Math.round(mCubeDegX[mFocusCube] / 90f)) {
-                    case 0: mCubeDegY[mFocusCube] -= deg; break;
-                    case 1: mCubeDegZ[mFocusCube] += deg; break;
-                    case 2: mCubeDegY[mFocusCube] += deg; break;
-                    case 3: mCubeDegZ[mFocusCube] -= deg; break;
+                if ((degX & 3) == 0) {
+                    mCubeDegY[mFocusCube] -= deg;
+                } else if ((degY & 1) == 0) {
+                    mCubeDegZ[mFocusCube] += deg * (1 - (degY & 2));
+                } else {
+                    mCubeDegX[mFocusCube] = 0;
+                    mCubeDegY[mFocusCube] -= deg;
+                    mCubeDegZ[mFocusCube] += 90f * (1 - (degY & 2));
                 }
                 mTouchX = x;
                 ret = true;
                 break;
             case ROTATE_Z:
                 deg = (float) Math.toDegrees(Math.atan2(mTouchY, mTouchX) - Math.atan2(y, x));
-                switch (Math.round(mCubeDegX[mFocusCube] / 90f)) {
-                    case 0: mCubeDegZ[mFocusCube] -= deg; break;
-                    case 1: mCubeDegY[mFocusCube] += deg; break;
-                    case 2: mCubeDegZ[mFocusCube] += deg; break;
-                    case 3: mCubeDegY[mFocusCube] -= deg; break;
+                if ((degX & 3) == 0) {
+                    mCubeDegZ[mFocusCube] += (degY == 0) ? -deg : deg;
+                } else {
+                    mCubeDegY[mFocusCube] -= deg;
                 }
                 mTouchX = x;
                 mTouchY = y;
@@ -138,13 +143,19 @@ public class CubesState {
                     ret = true;
                 }
             } else {
-                int degX = Math.round(mCubeDegX[mFocusCube] / 90f);
-                int degY = Math.round(mCubeDegY[mFocusCube] / 90f);
-                int degZ = Math.round(mCubeDegZ[mFocusCube] / 90f);
-                switch (degY & 3) {
-                    case 1: degZ += degX; degX = 0; break;
-                    case 2: degX += 2; degZ += 2; degY = 0; break;
-                    case 3: degZ -= degX; degX = 0; break;
+                if ((degX & 2) != 0) {
+                    if ((degY & 1) == 0) {
+                        degX += 2;
+                        degY += 2;
+                        degZ += 2;
+                    } else {
+                        degZ += (degX - 1) * (2 - (degY & 3));
+                        degX = 1;
+                    }
+                }
+                if ((degX & 3) == 0 && (degY & 1) != 0) {
+                    degZ += (degY & 3) - 2;
+                    degX = 1;
                 }
                 mCubeDegX[mFocusCube] = (degX & 3) * 90f;
                 mCubeDegY[mFocusCube] = (degY & 3) * 90f;
