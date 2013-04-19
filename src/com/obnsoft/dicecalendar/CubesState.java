@@ -20,6 +20,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import android.content.Context;
 import android.view.MotionEvent;
@@ -91,10 +93,10 @@ public class CubesState {
 
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            if (Math.abs(x) < 0.25f) {
-                mRotateMode = (Math.abs(y) < 0.25f) ? ROTATE_NONE : ROTATE_X;
+            if (Math.abs(x) < 0.20f) {
+                mRotateMode = (Math.abs(y) < 0.20f) ? ROTATE_NONE : ROTATE_X;
             } else {
-                mRotateMode = (Math.abs(y) < 0.25f) ? ROTATE_Y : ROTATE_Z;
+                mRotateMode = (Math.abs(y) < 0.20f) ? ROTATE_Y : ROTATE_Z;
             }
             mTouchX = x;
             mTouchY = y;
@@ -184,10 +186,14 @@ public class CubesState {
                         break;
                     }
                 }
-            } else if (Math.abs(y + 0.25f) < 0.125f) {
+            } else if (y < -0.125f) {
                 mCameraMode = true;
                 mTouchX = x;
                 mTouchY = y;
+            } else if (y > 0.125f) {
+                arrangeToday();
+                mIsDirty = true;
+                ret = true;
             }
             break;
         case MotionEvent.ACTION_MOVE:
@@ -205,12 +211,12 @@ public class CubesState {
                 ret = true;
             }
             if (mCameraMode) {
-                mBaseDegX += (mTouchY - y) * 90f;
+                mBaseDegX += (mTouchY - y) * 180f;
                 mBaseDegY += (x - mTouchX) * 90f;
                 if (mBaseDegX < -20f) mBaseDegX = -20f;
                 if (mBaseDegX > 20f)  mBaseDegX = 20f;
-                if (mBaseDegY < -20f) mBaseDegY = -20f;
-                if (mBaseDegY > 20f)  mBaseDegY = 20f;
+                if (mBaseDegY < -30f) mBaseDegY = -30f;
+                if (mBaseDegY > 30f)  mBaseDegY = 30f;
                 mTouchX = x;
                 mTouchY = y;
                 ret = true;
@@ -241,7 +247,47 @@ public class CubesState {
     }
 
     private void arrangeToday() {
-        
+        Calendar calendar = new GregorianCalendar();
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int month = calendar.get(Calendar.MONTH);
+        int wday = calendar.get(Calendar.DAY_OF_WEEK);
+        calcDegreesByFaceAngle(0, month % 6, (month < 6) ? 0 : 2);
+        calcDegreesByFaceAngle(3, (wday == Calendar.SUNDAY) ? 5 : wday - 2,
+                (wday == Calendar.SUNDAY) ? 2 : 0);
+        int ten, one;
+        if (day % 10 <= 5) {
+            ten = (day % 10 >= 3 || day >= 30 || mCubePos[1] > mCubePos[2]) ? 2 : 1;
+            one = 3 - ten;
+            calcDegreesByFaceAngle(ten, day / 10, 0);
+            calcDegreesByFaceAngle(one, day % 10, 0);
+        } else {
+            ten = 1;
+            one = 2;
+            calcDegreesByFaceAngle(ten, day / 10, 0);
+            day %= 10;
+            calcDegreesByFaceAngle(one, (day == 9) ? 3 : day - 3, (day == 9) ? 2 : 0);
+        }
+        if (mCubePos[one] < mCubePos[ten]) {
+            float tmp = mCubePos[one];
+            mCubePos[one] = mCubePos[ten];
+            mCubePos[ten] = tmp;
+        }
+    }
+
+    private void calcDegreesByFaceAngle(int type, int face, int angle) {
+        if (face == 0 || face == 2) {
+            mCubeDegX[type] = 0f;
+            mCubeDegY[type] = face * 90f;
+            mCubeDegZ[type] = (angle * (1 - face) & 3) * 90f;
+        } else {
+            if (face == 1) {
+                face++;
+                angle--;
+            }
+            mCubeDegX[type] = 90f;
+            mCubeDegY[type] = (angle & 3) * 90f;
+            mCubeDegZ[type] = ((face - 1) & 3) * 90f;
+        }
     }
 
     private boolean loadState() {

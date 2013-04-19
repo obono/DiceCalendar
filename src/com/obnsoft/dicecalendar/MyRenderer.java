@@ -31,8 +31,8 @@ import android.opengl.GLUtils;
 
 public class MyRenderer implements Renderer {
 
-    private static final float VN = -0.5f;
-    private static final float VP = 0.5f;
+    private static final float VP = 0.475f;
+    private static final float VN = -VP;
     private static final float[] VERTICES = {
         VN,VP,VP,   VP,VP,VP,   VN,VN,VP,   VP,VN,VP,   // front
         VP,VP,VP,   VP,VP,VN,   VP,VN,VP,   VP,VN,VN,   // right
