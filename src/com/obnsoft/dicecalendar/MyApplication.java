@@ -45,11 +45,13 @@ public class MyApplication extends Application {
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        PendingIntent intent =
-                PendingIntent.getService(this, 0, new Intent(this, MyService.class), 0);
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_ADJUST);
+        PendingIntent pendingIntent =
+                PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.setInexactRepeating(AlarmManager.RTC,
-                calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, intent);
+                calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
     }
 
 }

@@ -27,6 +27,11 @@ import android.widget.RemoteViews;
 
 public class MyService extends Service {
 
+    public static final String EXTRA_REQUEST = "request";
+    public static final String REQUEST_UPDATE = "update";
+    public static final String REQUEST_REFRESH = "refresh";
+    public static final String REQUEST_ADJUST = "adjust";
+
     @Override
     public IBinder onBind(Intent arg0) {
         return null;
@@ -39,6 +44,10 @@ public class MyService extends Service {
         RemoteViews rv = new RemoteViews(getPackageName(), R.layout.widget);
         PixelBuffer buffer = new PixelBuffer(512, 256);
         CubesState state = ((MyApplication) getApplication()).getCubesState();
+        if (intent != null && REQUEST_ADJUST.equals(intent.getStringExtra(EXTRA_REQUEST))) {
+            state.arrangeToday();
+            state.save();
+        }
         MyRenderer renderer = new MyRenderer(this, state, true);
         buffer.setRenderer(renderer);
         Bitmap bitmap = buffer.getBitmap();

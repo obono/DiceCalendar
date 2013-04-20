@@ -85,11 +85,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+
         mState.onTouchEvent(MotionEvent.ACTION_CANCEL, 0f, 0f);
         mState.mIsEach = false;
         mState.mFocusCube = CubesState.FOCUS_NONE;
         mState.save();
-        startService(new Intent(this, MyService.class));
+
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_REFRESH);
+        startService(intent);
     }
 
     /*-----------------------------------------------------------------------*/
