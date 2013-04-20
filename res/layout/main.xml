@@ -8,12 +8,41 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
-    <Button
+    <ImageButton
+        android:id="@+id/btn_compass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:src="@android:drawable/ic_menu_compass"
+        android:onClick="onClickCompass"
+        />
+    <ImageButton
+        android:id="@+id/btn_today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btn_compass"
+        android:layout_alignParentLeft="true"
+        android:src="@android:drawable/ic_menu_today"
+        android:onClick="onClickToday"
+        />
+    <ImageButton
+        android:id="@+id/btn_about"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:text="@string/about"
+        android:src="@android:drawable/ic_menu_info_details"
+        android:contentDescription="@string/about"
         android:onClick="onClickAbout"
+        />
+    <ImageButton
+        android:id="@+id/btn_prefs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btn_about"
+        android:layout_alignParentRight="true"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:onClick="onClickPrefs"
         />
 </RelativeLayout>

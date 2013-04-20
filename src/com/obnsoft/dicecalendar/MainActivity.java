@@ -85,8 +85,27 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        mState.onTouchEvent(MotionEvent.ACTION_CANCEL, 0f, 0f);
+        mState.mIsEach = false;
+        mState.mFocusCube = CubesState.FOCUS_NONE;
         mState.save();
         startService(new Intent(this, MyService.class));
+    }
+
+    /*-----------------------------------------------------------------------*/
+
+    public void onClickCompass(View v) {
+        mState.resetBaseRotation();
+        mGLView.requestRender();
+    }
+
+    public void onClickToday(View v) {
+        mState.arrangeToday();
+        mGLView.requestRender();
+    }
+
+    public void onClickPrefs(View v) {
+        //
     }
 
     public void onClickAbout(View v) {
