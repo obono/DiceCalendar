@@ -20,6 +20,8 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.widget.Scroller;
 
 public class MyGLSurfaceView extends GLSurfaceView {
 
@@ -40,9 +42,12 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     private CubesState  mState;
     private MyRenderer  mRenderer;
+    private Scroller    mScroller;
+    private VelocityTracker mTracker;
 
     private float   mTouchX;
     private float   mTouchY;
+    private float   mLastDeg;
     private boolean mMoveMode;
     private int     mRotateMode;
 
@@ -52,6 +57,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
         super(context, attrs);
         mMoveMode = false;
         mRotateMode = ROTATE_NONE;
+        mScroller = new Scroller(context);
+        mTracker = VelocityTracker.obtain();
     }
 
     public void setCubesState(CubesState state) {
@@ -63,7 +70,16 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     @Override
     public void computeScroll() {
-        super.computeScroll();
+        if (mState.focusCube != null) {
+            if (mScroller.computeScrollOffset()) {
+                rotateCube(mState.focusCube, mRotateMode, mScroller.getCurrX() - mLastDeg);
+                mLastDeg = mScroller.getCurrX();
+                postInvalidate();
+            } else {
+                mState.focusCube.alignPositionDegrees();
+            }
+            requestRender();
+        }
     }
 
     @Override
@@ -200,6 +216,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 }
             } else {
                 mState.focusCube.alignPositionDegrees();
+                //mScroller.startScroll(0, 0, 360, 0, 1000);
+                //invalidate();
                 ret = true;
             }
             break;
