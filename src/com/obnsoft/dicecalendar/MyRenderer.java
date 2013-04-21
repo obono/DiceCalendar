@@ -147,8 +147,8 @@ public class MyRenderer implements Renderer {
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 
         gl.glPushMatrix();
-        if (mState.mIsEach) {
-            drawEachCube(gl, mState.mFocusCube);
+        if (mState.isZooming) {
+            drawZoomingCube(gl, mState.focusCube);
         } else {
             drawAllCubes(gl);
         }
@@ -171,21 +171,21 @@ public class MyRenderer implements Renderer {
         return ret;
     }
 
-    private void drawEachCube(GL10 gl, int type) {
+    private void drawZoomingCube(GL10 gl, CubesState.Cube cube) {
         gl.glTranslatef(0f, 0f, -3f);
-        rotateXYZ(gl, mState.mCubeDegX[type], mState.mCubeDegY[type], mState.mCubeDegZ[type]);
-        drawCube(gl, type);
+        rotateXYZ(gl, cube.degX, cube.degY, cube.degZ);
+        drawCube(gl, cube.type);
     }
 
     private void drawAllCubes(GL10 gl) {
         gl.glTranslatef(0f, 0f, -9f);
-        rotateXYZ(gl, mState.mBaseDegX, mState.mBaseDegY, 0);
-        for (int i = 0; i < 4; i++) {
-            float fl = (i == mState.mFocusCube) ? 0.25f : 0f;
+        rotateXYZ(gl, mState.baseDegX, mState.baseDegY, 0);
+        for (CubesState.Cube cube : mState.cubes) {
+            float fl = (cube == mState.focusCube) ? 0.25f : 0f;
             gl.glPushMatrix();
-            gl.glTranslatef(mState.mCubePos[i], fl, fl);
-            rotateXYZ(gl, mState.mCubeDegX[i], mState.mCubeDegY[i], mState.mCubeDegZ[i]);
-            drawCube(gl, i);
+            gl.glTranslatef(cube.pos, fl, fl);
+            rotateXYZ(gl, cube.degX, cube.degY, cube.degZ);
+            drawCube(gl, cube.type);
             gl.glPopMatrix();
         }
     }

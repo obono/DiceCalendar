@@ -24,315 +24,148 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import android.content.Context;
-import android.view.MotionEvent;
 
 public class CubesState {
-
-    public static final int FOCUS_NONE = -1;
 
     private static final String FNAME_STATE = "state.dat";
     private static final int DATA_VERSION = 1;
 
-    private static final int ROTATE_NONE = 0;
-    private static final int ROTATE_X = 1;
-    private static final int ROTATE_Y = 2;
-    private static final int ROTATE_Z = 3;
-
-    private static final float THETA_MOVE = 1f / 16f;
-    private static final float THETA_AXIS = 0.2f;
-    private static final float THETA_BASE = 0.2f;
-    private static final float THETA_POS = 0.5f;
-
-    private static final float COEFFICIENT_BASE_X = 180f;
-    private static final float COEFFICIENT_BASE_Y = 90;
-    private static final float COEFFICIENT_POS = 4.5f;
-    private static final float COEFFICIENT_ROT = 135f;
-
     private static final float MAX_BASE_DEGX = 20f;
     private static final float MAX_BASE_DEGY = 30f;
 
-    protected boolean mIsEach;
-    protected int mFocusCube;
-
-    protected float mBaseDegX;
-    protected float mBaseDegY;
-    protected float[] mCubePos = new float[4];
-    protected float[] mCubeDegX = new float[4];
-    protected float[] mCubeDegY = new float[4];
-    protected float[] mCubeDegZ = new float[4];
+    protected boolean   isZooming;
+    protected float     baseDegX;
+    protected float     baseDegY;
+    protected Cube[]    cubes = new Cube[4];
+    protected Cube      focusCube;
 
     private Context mContext;
-    private float mTouchX;
-    private float mTouchY;
-    private boolean mMoveMode;
-    private int mRotateMode;
-    private boolean mIsDirty;
 
-    public CubesState(Context context) {
-        mContext = context;
-        loadState();
+    /*-----------------------------------------------------------------------*/
 
-        mIsEach = false;
-        mFocusCube = FOCUS_NONE;
-        mMoveMode = false;
-        mRotateMode = ROTATE_NONE;
-    }
+    class Cube {
 
-    public boolean onTouchEvent(int action, float x, float y) {
-        return (mIsEach) ? handleRotation(action, x, y) : handlePosition(action, x, y);
-    }
+        protected int type;
+        protected float pos;
+        protected float degX;
+        protected float degY;
+        protected float degZ;
 
-    public boolean resetBaseRotation() {
-        mBaseDegX = 0f;
-        mBaseDegY = 0f;
-        mIsDirty = true;
-        return true;
-    }
-
-    public boolean arrangeToday() {
-        arrangeByDate(new GregorianCalendar());
-        mIsDirty = true;
-        return true;
-    }
-
-    public boolean save() {
-        if (mIsDirty) {
-            mIsDirty = false;
-            return saveState();
-        } else {
-            return true;
+        public Cube(int type) {
+            this.type = type;
         }
+
+        protected void alignPositionDegrees() {
+            pos = Math.round(pos - 0.5f) + 0.5f;
+            if (pos < -1.5f) pos = -1.5f;
+            if (pos > 1.5f)  pos = 1.5f;
+
+            int angleX = Math.round(degX / 90f) & 3;
+            int angleY = Math.round(degY / 90f) & 3;
+            int angleZ = Math.round(degZ / 90f) & 3;
+            if ((angleX & 2) != 0) {
+                if ((angleY & 1) == 0) {
+                    angleX ^= 2;
+                    angleY ^= 2;
+                    angleZ ^= 2;
+                } else {
+                    angleZ += (angleX - 1) * (2 - angleY);
+                    angleX = 1;
+                }
+            }
+            if (angleX == 0 && (angleY & 1) != 0) {
+                angleZ += angleY - 2;
+                angleX = 1;
+            }
+            degX = (angleX & 3) * 90f;
+            degY = (angleY & 3) * 90f;
+            degZ = (angleZ & 3) * 90f;
+        }
+
+        protected void setDegreesByFaceAngle(int face, int angle) {
+            if (face == 0 || face == 2) {
+                degX = 0f;
+                degY = face * 90f;
+                degZ = (angle * (1 - face) & 3) * 90f;
+            } else {
+                if (face == 1) {
+                    face++;
+                    angle--;
+                }
+                degX = 90f;
+                degY = (angle & 3) * 90f;
+                degZ = ((face - 1) & 3) * 90f;
+            }
+        }
+
     }
 
     /*-----------------------------------------------------------------------*/
 
-    private boolean handlePosition(int action, float x, float y) {
-        boolean ret = false;
-        float pos = x * COEFFICIENT_POS;
-
-        switch (action) {
-        case MotionEvent.ACTION_DOWN:
-            if (Math.abs(y) <= THETA_BASE) {
-                for (int i = 0; i < 4; i++) {
-                    if (Math.abs(mCubePos[i] - pos) <= THETA_POS) {
-                        mFocusCube = i;
-                        mMoveMode = false;
-                        ret = true;
-                        break;
-                    }
-                }
-            }
-            mTouchX = x;
-            mTouchY = y;
-            break;
-        case MotionEvent.ACTION_MOVE:
-            if (mFocusCube == FOCUS_NONE) {
-                mBaseDegX += (mTouchY - y) * COEFFICIENT_BASE_X;
-                mBaseDegY += (x - mTouchX) * COEFFICIENT_BASE_Y;
-                if (mBaseDegX < -MAX_BASE_DEGX) mBaseDegX = -MAX_BASE_DEGX;
-                if (mBaseDegX > MAX_BASE_DEGX)  mBaseDegX = MAX_BASE_DEGX;
-                if (mBaseDegY < -MAX_BASE_DEGY) mBaseDegY = -MAX_BASE_DEGY;
-                if (mBaseDegY > MAX_BASE_DEGY)  mBaseDegY = MAX_BASE_DEGY;
-                mTouchX = x;
-                mTouchY = y;
-                ret = true;
-            } else {
-                if (!mMoveMode && Math.abs(mTouchX - x) < THETA_MOVE) {
-                    break;
-                }
-                mMoveMode = true;
-                mCubePos[mFocusCube] = pos;
-                for (int i = 0; i < 4; i++) {
-                    float gap = mCubePos[i] - mCubePos[mFocusCube];
-                    if (i != mFocusCube && Math.abs(gap) <= THETA_POS) {
-                        float tmp = mCubePos[i];
-                        mCubePos[i] = mTouchX * COEFFICIENT_POS;
-                        alignCube(i);
-                        mTouchX = tmp / COEFFICIENT_POS;
-                    }
-                }
-                ret = true;
-            }
-            break;
-        case MotionEvent.ACTION_UP:
-        case MotionEvent.ACTION_CANCEL:
-            if (mFocusCube == FOCUS_NONE) {
-                mIsDirty = true;
-            } else {
-                if (mMoveMode) {
-                    alignCube(mFocusCube);
-                    mFocusCube = FOCUS_NONE;
-                    mMoveMode = false;
-                } else if (action == MotionEvent.ACTION_UP) {
-                    mIsEach = true;
-                } else {
-                    mFocusCube = FOCUS_NONE;
-                }
-                ret = true;
-            }
-            break;
+    public CubesState(Context context) {
+        mContext = context;
+        for (int i = 0; i < cubes.length; i++) {
+            cubes[i] = new Cube(i);
         }
-
-        return ret;
+        loadState();
+        focusCube = null;
+        isZooming = false;
     }
 
-    private boolean handleRotation(int action, float x, float y) {
-        boolean ret = false;
-
-        switch (action) {
-        case MotionEvent.ACTION_DOWN:
-            mRotateMode = ROTATE_NONE;
-            mTouchX = x;
-            mTouchY = y;
-            break;
-        case MotionEvent.ACTION_MOVE:
-            if (mRotateMode == ROTATE_NONE) {
-                float diffX = Math.abs(mTouchX - x);
-                float diffY = Math.abs(mTouchY - y);
-                if (diffX < THETA_MOVE && diffY < THETA_MOVE) {
-                    break;
-                }
-                boolean judge1 = (diffX < diffY);
-                boolean judge2 = (Math.abs(y) < THETA_AXIS);
-                if (Math.abs(x) < THETA_AXIS) {
-                    mRotateMode = judge1 ? ROTATE_X : (judge2 ? ROTATE_Y : ROTATE_Z);
-                } else {
-                    mRotateMode = judge2 ? (judge1 ? ROTATE_Z : ROTATE_Y) : ROTATE_Z;
-                }
-            }
-            float deg = 0f;
-            switch (mRotateMode) {
-            case ROTATE_X:
-                deg = (mTouchY - y) * COEFFICIENT_ROT;
-                break;
-            case ROTATE_Y:
-                deg = (mTouchX - x) * COEFFICIENT_ROT;
-                break;
-            case ROTATE_Z:
-                deg = (float) Math.toDegrees(Math.atan2(mTouchY, mTouchX) - Math.atan2(y, x));
-                break;
-            }
-            rotateCube(mFocusCube, mRotateMode, deg);
-            mTouchX = x;
-            mTouchY = y;
-            ret = true;
-            break;
-        case MotionEvent.ACTION_UP:
-        case MotionEvent.ACTION_CANCEL:
-            if (mRotateMode == ROTATE_NONE) {
-                if (action == MotionEvent.ACTION_UP) {
-                    mIsEach = false;
-                    mFocusCube = FOCUS_NONE;
-                    ret = true;
-                }
-            } else {
-                alignCube(mFocusCube);
-                mIsDirty = true;
-                ret = true;
-            }
-            break;
-        }
-
-        return ret;
+    public void addBaseDegree(float degX, float degY) {
+        baseDegX += degX;
+        baseDegY += degY;
+        if (baseDegX < -MAX_BASE_DEGX) baseDegX = -MAX_BASE_DEGX;
+        if (baseDegX > MAX_BASE_DEGX)  baseDegX = MAX_BASE_DEGX;
+        if (baseDegY < -MAX_BASE_DEGY) baseDegY = -MAX_BASE_DEGY;
+        if (baseDegY > MAX_BASE_DEGY)  baseDegY = MAX_BASE_DEGY;
     }
 
-    private void rotateCube(int type, int mode, float deg) {
-        int angleX = Math.round(mCubeDegX[type] / 90f) & 3;
-        int angleY = Math.round(mCubeDegY[type] / 90f) & 3;
-        //int angleZ = Math.round(mCubeDegZ[type] / 90f) & 3;
+    public void resetBaseRotation() {
+        baseDegX = 0f;
+        baseDegY = 0f;
+    }
 
-        switch (mode) {
-        case ROTATE_X:
-            mCubeDegX[type] += deg;
-            break;
-        case ROTATE_Y:
-            if (angleX == 0) {
-                mCubeDegY[type] -= deg;
-            } else if ((angleY & 1) == 0) {
-                mCubeDegZ[type] += deg * (1 - (angleY & 2));
-            } else {
-                mCubeDegX[type] = 0;
-                mCubeDegY[type] -= deg;
-                mCubeDegZ[type] += 90f * (1 - (angleY & 2));
-            }
-            break;
-        case ROTATE_Z:
-            if (angleX == 0) {
-                mCubeDegZ[type] += (angleY == 0) ? -deg : deg;
-            } else {
-                mCubeDegY[type] -= deg;
-            }
-            break;
+    public void alignCubes() {
+        for (Cube cube : cubes) {
+            cube.alignPositionDegrees();
         }
     }
 
-    private void alignCube(int type) {
-        mCubePos[type] = Math.round(mCubePos[type] - 0.5f) + 0.5f;
-        if (mCubePos[type] < -1.5f) mCubePos[type] = -1.5f;
-        if (mCubePos[type] > 1.5f)  mCubePos[type] = 1.5f;
-
-        int angleX = Math.round(mCubeDegX[type] / 90f) & 3;
-        int angleY = Math.round(mCubeDegY[type] / 90f) & 3;
-        int angleZ = Math.round(mCubeDegZ[type] / 90f) & 3;
-        if ((angleX & 2) != 0) {
-            if ((angleY & 1) == 0) {
-                angleX ^= 2;
-                angleY ^= 2;
-                angleZ ^= 2;
-            } else {
-                angleZ += (angleX - 1) * (2 - angleY);
-                angleX = 1;
-            }
-        }
-        if (angleX == 0 && (angleY & 1) != 0) {
-            angleZ += angleY - 2;
-            angleX = 1;
-        }
-        mCubeDegX[type] = (angleX & 3) * 90f;
-        mCubeDegY[type] = (angleY & 3) * 90f;
-        mCubeDegZ[type] = (angleZ & 3) * 90f;
+    public void arrangeToday() {
+        arrangeByDate(new GregorianCalendar());
     }
+
+    public boolean save() {
+        return saveState();
+    }
+
+    /*-----------------------------------------------------------------------*/
 
     private void arrangeByDate(Calendar calendar) {
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int month = calendar.get(Calendar.MONTH);
         int wday = calendar.get(Calendar.DAY_OF_WEEK);
-        calcDegreesByFaceAngle(0, month % 6, (month < 6) ? 0 : 2);
-        calcDegreesByFaceAngle(3, (wday == Calendar.SUNDAY) ? 5 : wday - 2,
+        cubes[0].setDegreesByFaceAngle(month % 6, (month < 6) ? 0 : 2);
+        cubes[3].setDegreesByFaceAngle((wday == Calendar.SUNDAY) ? 5 : wday - 2,
                 (wday == Calendar.SUNDAY) ? 2 : 0);
-        int ten, one;
+        int cubeTen, cubeOne;
         if (day % 10 <= 5) {
-            ten = (day % 10 >= 3 || day >= 30 || mCubePos[1] > mCubePos[2]) ? 2 : 1;
-            one = 3 - ten;
-            calcDegreesByFaceAngle(ten, day / 10, 0);
-            calcDegreesByFaceAngle(one, day % 10, 0);
+            cubeTen = (day % 10 >= 3 || day >= 30 || cubes[1].pos > cubes[2].pos) ? 2 : 1;
+            cubeOne = 3 - cubeTen;
+            cubes[cubeTen].setDegreesByFaceAngle(day / 10, 0);
+            cubes[cubeOne].setDegreesByFaceAngle(day % 10, 0);
         } else {
-            ten = 1;
-            one = 2;
-            calcDegreesByFaceAngle(ten, day / 10, 0);
+            cubeTen = 1;
+            cubeOne = 2;
+            cubes[cubeTen].setDegreesByFaceAngle(day / 10, 0);
             day %= 10;
-            calcDegreesByFaceAngle(one, (day == 9) ? 3 : day - 3, (day == 9) ? 2 : 0);
+            cubes[cubeOne].setDegreesByFaceAngle((day == 9) ? 3 : day - 3, (day == 9) ? 2 : 0);
         }
-        if (mCubePos[one] < mCubePos[ten]) {
-            float tmp = mCubePos[one];
-            mCubePos[one] = mCubePos[ten];
-            mCubePos[ten] = tmp;
-        }
-    }
-
-    private void calcDegreesByFaceAngle(int type, int face, int angle) {
-        if (face == 0 || face == 2) {
-            mCubeDegX[type] = 0f;
-            mCubeDegY[type] = face * 90f;
-            mCubeDegZ[type] = (angle * (1 - face) & 3) * 90f;
-        } else {
-            if (face == 1) {
-                face++;
-                angle--;
-            }
-            mCubeDegX[type] = 90f;
-            mCubeDegY[type] = (angle & 3) * 90f;
-            mCubeDegZ[type] = ((face - 1) & 3) * 90f;
+        if (cubes[cubeOne].pos < cubes[cubeTen].pos) {
+            float tmp = cubes[cubeOne].pos;
+            cubes[cubeOne].pos = cubes[cubeTen].pos;
+            cubes[cubeTen].pos = tmp;
         }
     }
 
@@ -343,22 +176,22 @@ public class CubesState {
                     new DataInputStream(mContext.openFileInput(FNAME_STATE));
             switch (in.read()) {
             case DATA_VERSION:
-                mBaseDegX = in.readFloat();
-                mBaseDegY = in.readFloat();
-                for (int i = 0; i < 4; i++) {
-                    mCubePos[i] = in.readFloat();
-                    mCubeDegX[i] = in.readFloat();
-                    mCubeDegY[i] = in.readFloat();
-                    mCubeDegZ[i] = in.readFloat();
+                baseDegX = in.readFloat();
+                baseDegY = in.readFloat();
+                for (Cube cube : cubes) {
+                    cube.pos = in.readFloat();
+                    cube.degX = in.readFloat();
+                    cube.degY = in.readFloat();
+                    cube.degZ = in.readFloat();
                 }
             }
             in.close();
             ret = true;
         } catch (FileNotFoundException e) {
-            mBaseDegX = mBaseDegY = 0f;
-            for (int i = 0; i < 4; i++) {
-                mCubePos[i] = i - 1.5f;
-                mCubeDegX[i] = mCubeDegY[i] = mCubeDegZ[i] = 0f;
+            baseDegX = baseDegY = 0f;
+            for (Cube cube : cubes) {
+                cube.pos = cube.type - 1.5f;
+                cube.degX = cube.degY = cube.degZ = 0f;
             }
             ret = true;
         } catch (IOException e) {
@@ -373,13 +206,13 @@ public class CubesState {
             DataOutputStream out =
                     new DataOutputStream(mContext.openFileOutput(FNAME_STATE, 0));
             out.write(DATA_VERSION);
-            out.writeFloat(mBaseDegX);
-            out.writeFloat(mBaseDegY);
-            for (int i = 0; i < 4; i++) {
-                out.writeFloat(mCubePos[i]);
-                out.writeFloat(mCubeDegX[i]);
-                out.writeFloat(mCubeDegY[i]);
-                out.writeFloat(mCubeDegZ[i]);
+            out.writeFloat(baseDegX);
+            out.writeFloat(baseDegY);
+            for (Cube cube : cubes) {
+                out.writeFloat(cube.pos);
+                out.writeFloat(cube.degX);
+                out.writeFloat(cube.degY);
+                out.writeFloat(cube.degZ);
             }
             out.close();
             ret = true;

@@ -29,19 +29,15 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    private GLSurfaceView   mGLView;
+    private MyGLSurfaceView mGLView;
     private CubesState      mState;
-    private MyRenderer      mRenderer;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -61,34 +57,18 @@ public class MainActivity extends Activity {
         }
 
         setContentView(R.layout.main);
-        mGLView = (GLSurfaceView) findViewById(R.id.glview);
+        mGLView = (MyGLSurfaceView) findViewById(R.id.glview);
         mState = ((MyApplication) getApplication()).getCubesState();
-        mRenderer = new MyRenderer(this, mState, false);
-        mGLView.setRenderer(mRenderer);
-        mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        mGLView.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent e) {
-                float w = mGLView.getWidth();
-                float h = mGLView.getHeight();
-                float s = Math.min(w, h);
-                float x = (e.getX() - w / 2) / s;
-                float y = (h / 2 - e.getY()) / s;
-                if (mState.onTouchEvent(e.getActionMasked(), x, y)) {
-                    mGLView.requestRender();
-                }
-                return true;
-            }
-        });
+        mGLView.setCubesState(mState);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        mState.onTouchEvent(MotionEvent.ACTION_CANCEL, 0f, 0f);
-        mState.mIsEach = false;
-        mState.mFocusCube = CubesState.FOCUS_NONE;
+        mState.alignCubes();
+        mState.isZooming = false;
+        mState.focusCube = null;
         mState.save();
 
         Intent intent = new Intent(this, MyService.class);
