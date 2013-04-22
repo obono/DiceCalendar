@@ -40,8 +40,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
     private static final float COEFFICIENT_BASE_Y = 90;
     private static final float COEFFICIENT_POS = 4.5f;
     private static final float COEFFICIENT_ROT = 135f;
+    private static final int COEFFICIENT_VEROCITY = 2;
     private static final int COEFFICIENT_FLING = 4;
-    private static final int COEFFICIENT_DUR_SCRL = 6;
+    private static final int COEFFICIENT_DUR_SCRL = 10;
 
     private CubesState  mState;
     private MyRenderer  mRenderer;
@@ -85,7 +86,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
         if (mTracker != null) {
             mTracker.addMovement(event);
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-                mTracker.computeCurrentVelocity(100);
+                mTracker.computeCurrentVelocity(100, s * COEFFICIENT_VEROCITY);
                 x = mTouchX - mTracker.getXVelocity() / s;
                 y = mTouchY + mTracker.getYVelocity() / s;
                 mTracker.recycle();
@@ -141,26 +142,34 @@ public class MyGLSurfaceView extends GLSurfaceView {
             if (mState.focusCube == null) {
                 mState.addBaseDegree((mTouchY - y) * COEFFICIENT_BASE_X,
                         (x - mTouchX) * COEFFICIENT_BASE_Y);
-                mTouchX = x;
-                mTouchY = y;
                 ret = true;
             } else {
                 if (!mMoveMode && Math.abs(mTouchX - x) < THETA_MOVE) {
                     break;
                 }
                 mMoveMode = true;
-                mState.focusCube.pos = pos;
-                for (CubesState.Cube cube : mState.cubes) {
-                    float gap = cube.pos - mState.focusCube.pos;
-                    if (cube != mState.focusCube && Math.abs(gap) <= THETA_POS) {
-                        float tmp = cube.pos;
-                        cube.pos = mTouchX * COEFFICIENT_POS;
-                        cube.alignPositionDegrees();
-                        mTouchX = tmp / COEFFICIENT_POS;
+                if (mTouchX != x) {
+                    float posL, posR, move;
+                    if (mTouchX < x) {
+                        posL = mTouchX * COEFFICIENT_POS;
+                        posR = pos + THETA_POS;
+                        move = -1f;
+                    } else {
+                        posL = pos - THETA_POS;
+                        posR = mTouchX * COEFFICIENT_POS;
+                        move = 1f;
                     }
+                    for (CubesState.Cube cube : mState.cubes) {
+                        if (cube != mState.focusCube && posL <= cube.pos && cube.pos <= posR) {
+                            cube.pos += move;
+                        }
+                    }
+                    mState.focusCube.pos = pos;
+                    ret = true;
                 }
-                ret = true;
             }
+            mTouchX = x;
+            mTouchY = y;
             break;
         case MotionEvent.ACTION_UP:
         case MotionEvent.ACTION_CANCEL:
@@ -254,7 +263,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
         case ROTATE_Y:
             return (x1 - x2) * COEFFICIENT_ROT;
         case ROTATE_Z:
-            return (float) Math.toDegrees(Math.atan2(y1, x1) - Math.atan2(y2, x2));
+            float deg = (float) Math.toDegrees(Math.atan2(y1, x1) - Math.atan2(y2, x2));
+            if (Math.abs(deg) > 180) deg -= Math.signum(deg) * 360;
+            return deg;
         }
         return 0f;
     }
