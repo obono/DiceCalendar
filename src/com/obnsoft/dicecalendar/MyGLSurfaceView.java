@@ -34,11 +34,14 @@ public class MyGLSurfaceView extends GLSurfaceView {
     private static final float THETA_AXIS = 0.2f;
     private static final float THETA_BASE = 0.2f;
     private static final float THETA_POS = 0.5f;
+    private static final float THETA_VELDEG = 1f;
 
     private static final float COEFFICIENT_BASE_X = 180f;
     private static final float COEFFICIENT_BASE_Y = 90;
     private static final float COEFFICIENT_POS = 4.5f;
     private static final float COEFFICIENT_ROT = 135f;
+    private static final int COEFFICIENT_FLING = 4;
+    private static final int COEFFICIENT_DUR_SCRL = 6;
 
     private CubesState  mState;
     private MyRenderer  mRenderer;
@@ -47,9 +50,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     private float   mTouchX;
     private float   mTouchY;
-    private float   mLastDeg;
     private boolean mMoveMode;
     private int     mRotateMode;
+    private int     mRotateDeg;
 
     /*-----------------------------------------------------------------------*/
 
@@ -58,7 +61,6 @@ public class MyGLSurfaceView extends GLSurfaceView {
         mMoveMode = false;
         mRotateMode = ROTATE_NONE;
         mScroller = new Scroller(context);
-        mTracker = VelocityTracker.obtain();
     }
 
     public void setCubesState(CubesState state) {
@@ -69,20 +71,6 @@ public class MyGLSurfaceView extends GLSurfaceView {
     }
 
     @Override
-    public void computeScroll() {
-        if (mState.focusCube != null) {
-            if (mScroller.computeScrollOffset()) {
-                rotateCube(mState.focusCube, mRotateMode, mScroller.getCurrX() - mLastDeg);
-                mLastDeg = mScroller.getCurrX();
-                postInvalidate();
-            } else {
-                mState.focusCube.alignPositionDegrees();
-            }
-            requestRender();
-        }
-    }
-
-    @Override
     public boolean onTouchEvent(MotionEvent event) {
         float w = getWidth();
         float h = getHeight();
@@ -90,13 +78,42 @@ public class MyGLSurfaceView extends GLSurfaceView {
         float x = (event.getX() - w / 2) / s;
         float y = (h / 2 - event.getY()) / s;
 
-        int action = event.getAction();
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN && mTracker == null) {
+            mTracker = VelocityTracker.obtain();
+        }
+        if (mTracker != null) {
+            mTracker.addMovement(event);
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                mTracker.computeCurrentVelocity(100);
+                x = mTouchX - mTracker.getXVelocity() / s;
+                y = mTouchY + mTracker.getYVelocity() / s;
+                mTracker.recycle();
+                mTracker = null;
+            }
+        }
         boolean ret = (mState.isZooming) ?
                 handleRotation(action, x, y) : handlePosition(action, x, y);
         if (ret) {
             requestRender();
         }
         return true;
+    }
+
+    @Override
+    public void computeScroll() {
+        if (mRotateMode != ROTATE_NONE && mState.focusCube != null) {
+            if (mScroller.computeScrollOffset()) {
+                float deg = mScroller.getCurrX() - mRotateDeg;
+                rotateCube(mState.focusCube, mRotateMode, deg);
+                mRotateDeg = mScroller.getCurrX();
+                postInvalidate();
+            } else {
+                mState.focusCube.alignPositionDegrees();
+                mRotateMode = ROTATE_NONE;
+            }
+            requestRender();
+        }
     }
 
     /*-----------------------------------------------------------------------*/
@@ -170,7 +187,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            mRotateMode = ROTATE_NONE;
+            if (!mScroller.isFinished()) {
+                mScroller.abortAnimation();
+            }
             mTouchX = x;
             mTouchY = y;
             break;
@@ -189,35 +208,37 @@ public class MyGLSurfaceView extends GLSurfaceView {
                     mRotateMode = judge2 ? (judge1 ? ROTATE_Z : ROTATE_Y) : ROTATE_Z;
                 }
             }
-            float deg = 0f;
-            switch (mRotateMode) {
-            case ROTATE_X:
-                deg = (mTouchY - y) * COEFFICIENT_ROT;
-                break;
-            case ROTATE_Y:
-                deg = (mTouchX - x) * COEFFICIENT_ROT;
-                break;
-            case ROTATE_Z:
-                deg = (float) Math.toDegrees(Math.atan2(mTouchY, mTouchX) - Math.atan2(y, x));
-                break;
-            }
+            float deg = calcDegreesToRotate(mRotateMode, mTouchX, mTouchY, x, y);
             rotateCube(mState.focusCube, mRotateMode, deg);
             mTouchX = x;
             mTouchY = y;
             ret = true;
             break;
         case MotionEvent.ACTION_UP:
-        case MotionEvent.ACTION_CANCEL:
             if (mRotateMode == ROTATE_NONE) {
-                if (action == MotionEvent.ACTION_UP) {
-                    mState.isZooming = false;
-                    mState.focusCube = null;
-                    ret = true;
-                }
+                mState.isZooming = false;
+                mState.focusCube = null;
+                ret = true;
             } else {
+                float velDeg = calcDegreesToRotate(mRotateMode, mTouchX, mTouchY, x, y);
+                mRotateDeg = (int) rotateCube(mState.focusCube, mRotateMode, 0f);
+                if (Math.abs(velDeg) > THETA_VELDEG) {
+                    mScroller.fling(mRotateDeg, 0, (int) (-velDeg * COEFFICIENT_FLING), 0,
+                            Integer.MIN_VALUE, Integer.MAX_VALUE, 0, 0);
+                    mScroller.setFinalX(Math.round(mScroller.getFinalX() / 90f) * 90);
+                } else {
+                    int finalDeg = Math.round(mRotateDeg / 90f) * 90;
+                    int diffDeg = finalDeg - mRotateDeg;
+                    int duration = Math.abs(diffDeg) * COEFFICIENT_DUR_SCRL;
+                    mScroller.startScroll(mRotateDeg, 0, diffDeg, 0, duration);
+                }
+                postInvalidate();
+                ret = true;
+            }
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            if (mRotateMode != ROTATE_NONE) {
                 mState.focusCube.alignPositionDegrees();
-                //mScroller.startScroll(0, 0, 360, 0, 1000);
-                //invalidate();
                 ret = true;
             }
             break;
@@ -226,34 +247,57 @@ public class MyGLSurfaceView extends GLSurfaceView {
         return ret;
     }
 
-    private void rotateCube(CubesState.Cube cube, int mode, float deg) {
+    private float calcDegreesToRotate(int mode, float x1, float y1, float x2, float y2) {
+        switch (mode) {
+        case ROTATE_X:
+            return (y1 - y2) * COEFFICIENT_ROT;
+        case ROTATE_Y:
+            return (x1 - x2) * COEFFICIENT_ROT;
+        case ROTATE_Z:
+            return (float) Math.toDegrees(Math.atan2(y1, x1) - Math.atan2(y2, x2));
+        }
+        return 0f;
+    }
+
+    private float rotateCube(CubesState.Cube cube, int mode, float deg) {
         int angleX = Math.round(cube.degX / 90f) & 3;
         int angleY = Math.round(cube.degY / 90f) & 3;
         //int angleZ = Math.round(cube.degZ / 90f) & 3;
+        float workDeg = 0f;
 
         switch (mode) {
         case ROTATE_X:
             cube.degX += deg;
+            workDeg = cube.degX;
             break;
         case ROTATE_Y:
             if (angleX == 0) {
                 cube.degY -= deg;
+                workDeg = -cube.degY;
             } else if ((angleY & 1) == 0) {
-                cube.degZ += deg * (1 - (angleY & 2));
+                float s = 1f - (angleY & 2);
+                cube.degZ += deg * s;
+                workDeg = cube.degZ * s;
             } else {
                 cube.degX = 0;
                 cube.degY -= deg;
                 cube.degZ += 90f * (1 - (angleY & 2));
+                workDeg = -cube.degY;
             }
             break;
         case ROTATE_Z:
             if (angleX == 0) {
-                cube.degZ += (angleY == 0) ? -deg : deg;
+                float s = (angleY == 0) ? -1f : 1f;
+                cube.degZ += deg * s;
+                workDeg = cube.degZ * s;
             } else {
                 cube.degY -= deg;
+                workDeg = -cube.degY;
             }
             break;
         }
+
+        return workDeg;
     }
 
 }
