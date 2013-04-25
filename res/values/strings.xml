@@ -8,5 +8,5 @@
     <string name="widget_large">Dice Calendar (Large)</string>
     <string name="prefs_auto">Auto arrangement</string>
     <string name="prefs_auto_sub">Cubes are arranged every day at midnight.</string>
-    <string name="about">Version information</string>
+    <string name="prefs_about">Version information</string>
 </resources>

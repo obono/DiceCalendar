@@ -22,11 +22,12 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 
 public class SettingActivity extends PreferenceActivity
-        implements OnSharedPreferenceChangeListener {
+        implements OnPreferenceClickListener, OnSharedPreferenceChangeListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,12 @@ public class SettingActivity extends PreferenceActivity
     }
 
     @Override
+    public boolean onPreferenceClick(Preference pref) {
+        MainActivity.showVersion(this);
+        return true;
+    }
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
         setSummary(key);
     }
@@ -70,6 +77,9 @@ public class SettingActivity extends PreferenceActivity
 
     private void setSummary(String key) {
         Preference pref = findPreference(key);
+        if (key.equals("about")) {
+            pref.setOnPreferenceClickListener(this);
+        }
         if (pref instanceof ListPreference) {
             pref.setSummary(((ListPreference) pref).getEntry());
         }

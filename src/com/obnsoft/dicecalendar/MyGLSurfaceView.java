@@ -25,6 +25,10 @@ import android.widget.Scroller;
 
 public class MyGLSurfaceView extends GLSurfaceView {
 
+    protected interface OnZoomListener {
+        void onZoomModeChanged(boolean isZooming);
+    }
+
     private static final int ROTATE_NONE = 0;
     private static final int ROTATE_X = 1;
     private static final int ROTATE_Y = 2;
@@ -52,6 +56,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
     private Scroller    mScroller;
     private Scroller    mInterpolator;
     private VelocityTracker mTracker;
+    private OnZoomListener  mListener;
 
     private boolean mZoomMode;
     private boolean mMoveMode;
@@ -76,6 +81,10 @@ public class MyGLSurfaceView extends GLSurfaceView {
         mRenderer = new MyRenderer(getContext(), mState, false);
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
+
+    public void setOnZoomListener(OnZoomListener listener) {
+        mListener = listener;
     }
 
     @Override
@@ -141,7 +150,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
     public void regulate() {
         mScroller.abortAnimation();
         mInterpolator.abortAnimation();
-        mZoomMode = false;
+        setZoomMode(false);
         mMoveMode = false;
         mRotateMode = ROTATE_NONE;
         mState.alignCubes();
@@ -157,13 +166,14 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
         switch (action) {
         case MotionEvent.ACTION_DOWN:
+            if (!mInterpolator.isFinished()) {
+                mInterpolator.abortAnimation();
+                mState.focusCube = null;
+                mRenderer.setInterpolation(0f);
+            }
             if (Math.abs(y) <= THETA_BASE) {
                 for (CubesState.Cube cube : mState.cubes) {
                     if (Math.abs(cube.pos - pos) <= THETA_POS) {
-                        if (!mInterpolator.isFinished()) {
-                            mInterpolator.abortAnimation();
-                            mRenderer.setInterpolation(0f);
-                        }
                         mState.focusCube = cube;
                         mMoveMode = false;
                         ret = true;
@@ -215,7 +225,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
                     mState.focusCube = null;
                     mMoveMode = false;
                 } else if (action == MotionEvent.ACTION_UP) {
-                    mZoomMode = true;
+                    setZoomMode(true);
                     mInterpolator.startScroll(0, 0, GRD_INTERPOL, 0, DUR_INTERPOL);
                     postInvalidate();
                 } else {
@@ -263,7 +273,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
             break;
         case MotionEvent.ACTION_UP:
             if (mRotateMode == ROTATE_NONE) {
-                mZoomMode = false;
+                setZoomMode(false);
                 mInterpolator.startScroll(GRD_INTERPOL, 0, -GRD_INTERPOL, 0, DUR_INTERPOL);
                 postInvalidate();
                 ret = true;
@@ -293,6 +303,13 @@ public class MyGLSurfaceView extends GLSurfaceView {
         }
 
         return ret;
+    }
+
+    private void setZoomMode(boolean isZooming) {
+        mZoomMode = isZooming;
+        if (mListener != null) {
+            mListener.onZoomModeChanged(isZooming);
+        }
     }
 
     private float calcDegreesToRotate(int mode, float x1, float y1, float x2, float y2) {

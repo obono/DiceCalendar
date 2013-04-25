@@ -25,6 +25,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -32,6 +33,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
@@ -60,6 +62,16 @@ public class MainActivity extends Activity {
         mGLView = (MyGLSurfaceView) findViewById(R.id.glview);
         mState = ((MyApplication) getApplication()).getCubesState();
         mGLView.setCubesState(mState);
+        final ImageButton btnCompass = (ImageButton) findViewById(R.id.btn_compass);
+        final ImageButton btnToday = (ImageButton) findViewById(R.id.btn_today);
+        mGLView.setOnZoomListener(new MyGLSurfaceView.OnZoomListener() {
+            @Override
+            public void onZoomModeChanged(boolean isZooming) {
+                int visibility = isZooming ? View.INVISIBLE : View.VISIBLE;
+                btnCompass.setVisibility(visibility);
+                btnToday.setVisibility(visibility);
+            }
+        });
     }
 
     @Override
@@ -91,22 +103,20 @@ public class MainActivity extends Activity {
     }
 
     public void onClickAbout(View v) {
-        showVersion();
+        showVersion(this);
     }
 
-    /*-----------------------------------------------------------------------*/
-
-    private void showVersion() {
-        LayoutInflater inflater = LayoutInflater.from(this);
+    public static void showVersion(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
         View aboutView = inflater.inflate(R.layout.about, null);
         try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(
-                    getPackageName(), PackageManager.GET_META_DATA);
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(
+                    context.getPackageName(), PackageManager.GET_META_DATA);
             TextView textView = (TextView) aboutView.findViewById(R.id.text_about_version);
             textView.setText("Version " + packageInfo.versionName);
 
             StringBuilder buf = new StringBuilder();
-            InputStream in = getResources().openRawResource(R.raw.license);
+            InputStream in = context.getResources().openRawResource(R.raw.license);
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String str;
             while((str = reader.readLine()) != null) {
@@ -119,9 +129,9 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(context)
                 .setIcon(android.R.drawable.ic_dialog_info)
-                .setTitle(R.string.about)
+                .setTitle(R.string.prefs_about)
                 .setView(aboutView)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
