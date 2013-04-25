@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
     }
 
     public void onClickPrefs(View v) {
-        //
+        startActivity(new Intent(this, SettingActivity.class));
     }
 
     public void onClickAbout(View v) {

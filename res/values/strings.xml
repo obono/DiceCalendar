@@ -2,7 +2,11 @@
 <resources>
     <string name="app_code">OBN-A13</string>
     <string name="app_name">Dice Calendar</string>
-    <string name="app_name_small">Dice Calendar (Small)</string>
-    <string name="app_name_large">Dice Calendar (Large)</string>
+    <string name="title_main">Dice Calendar</string>
+    <string name="title_prefs">Preferences - Dice Calendar</string>
+    <string name="widget_small">Dice Calendar (Small)</string>
+    <string name="widget_large">Dice Calendar (Large)</string>
+    <string name="prefs_auto">Auto arrangement</string>
+    <string name="prefs_auto_sub">Cubes are arranged every day at midnight.</string>
     <string name="about">Version information</string>
 </resources>

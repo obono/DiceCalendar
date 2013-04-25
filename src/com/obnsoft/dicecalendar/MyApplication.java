@@ -23,35 +23,51 @@ import android.app.AlarmManager;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 public class MyApplication extends Application {
 
-    private CubesState mState;
+    private static final String PREF_KEY_AUTO = "auto";
+
+    private CubesState      mState;
+    private PendingIntent   mAlarmIntent;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mState = new CubesState(this);
-        setMidnightAlerm();
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_ADJUST);
+        mAlarmIntent = PendingIntent.getService(
+                this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        getPrefsInSetting(prefs);
+    }
+
+    public void getPrefsInSetting(SharedPreferences prefs) {
+        setMidnightAlerm(prefs.getBoolean(PREF_KEY_AUTO, true));
     }
 
     public CubesState getCubesState() {
         return mState;
     }
 
-    public void setMidnightAlerm() {
-        Calendar calendar = new GregorianCalendar();
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        Intent intent = new Intent(this, MyService.class);
-        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_ADJUST);
-        PendingIntent pendingIntent =
-                PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    /*-----------------------------------------------------------------------*/
+
+    private void setMidnightAlerm(boolean enable) {
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        am.setInexactRepeating(AlarmManager.RTC,
-                calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        if (enable) {
+            Calendar calendar = new GregorianCalendar();
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            am.setInexactRepeating(AlarmManager.RTC,
+                    calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, mAlarmIntent);
+        } else {
+            am.cancel(mAlarmIntent);
+        }
     }
 
 }
