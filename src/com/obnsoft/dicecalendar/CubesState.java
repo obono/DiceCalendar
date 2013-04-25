@@ -33,7 +33,6 @@ public class CubesState {
     private static final float MAX_BASE_DEGX = 20f;
     private static final float MAX_BASE_DEGY = 30f;
 
-    protected boolean   isZooming;
     protected float     baseDegX;
     protected float     baseDegY;
     protected Cube[]    cubes = new Cube[4];
@@ -109,7 +108,6 @@ public class CubesState {
         }
         loadState();
         focusCube = null;
-        isZooming = false;
     }
 
     public void addBaseDegree(float degX, float degY) {

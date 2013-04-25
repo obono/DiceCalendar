@@ -90,6 +90,8 @@ public class MyRenderer implements Renderer {
     private final FloatBuffer mTexCoordBuffer;
     private final FloatBuffer mNormalBuffer;
 
+    private float mInterpol = 0f;
+
     /*-----------------------------------------------------------------------*/
 
     public MyRenderer(Context context, CubesState state, boolean isWidget) {
@@ -146,17 +148,21 @@ public class MyRenderer implements Renderer {
         gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 
-        gl.glPushMatrix();
-        if (mState.isZooming) {
-            drawZoomingCube(gl, mState.focusCube);
-        } else {
-            drawAllCubes(gl);
-        }
-        gl.glPopMatrix();
+        drawAllCubes(gl);
 
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+    }
+
+    public float getInterpolation() {
+        return mInterpol;
+    }
+
+    public void setInterpolation(float val) {
+        if (val < 0f) val = 0f;
+        if (val > 1f) val = 1f;
+        mInterpol = val;
     }
 
     /*-----------------------------------------------------------------------*/
@@ -171,19 +177,15 @@ public class MyRenderer implements Renderer {
         return ret;
     }
 
-    private void drawZoomingCube(GL10 gl, CubesState.Cube cube) {
-        gl.glTranslatef(0f, 0f, -3f);
-        rotateXYZ(gl, cube.degX, cube.degY, cube.degZ);
-        drawCube(gl, cube.type);
-    }
-
     private void drawAllCubes(GL10 gl) {
-        gl.glTranslatef(0f, 0f, -9f);
-        rotateXYZ(gl, mState.baseDegX, mState.baseDegY, 0);
         for (CubesState.Cube cube : mState.cubes) {
-            float fl = (cube == mState.focusCube) ? 0.25f : 0f;
+            float coeff = (cube == mState.focusCube) ? 1f - mInterpol : 1f;
+            float transY = (cube == mState.focusCube) ? 0f : -6f * mInterpol;
+            float high = (mInterpol == 0 && cube == mState.focusCube) ? 0.25f : 0f;
             gl.glPushMatrix();
-            gl.glTranslatef(cube.pos, fl, fl);
+            gl.glTranslatef(0f, transY, -3f - 6f * coeff);
+            rotateXYZ(gl, mState.baseDegX * coeff, mState.baseDegY * coeff, 0);
+            gl.glTranslatef(cube.pos * coeff, high, high);
             rotateXYZ(gl, cube.degX, cube.degY, cube.degZ);
             drawCube(gl, cube.type);
             gl.glPopMatrix();

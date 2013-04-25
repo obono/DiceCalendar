@@ -66,9 +66,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
 
-        mState.alignCubes();
-        mState.isZooming = false;
-        mState.focusCube = null;
+        mGLView.regulate();
         mState.save();
 
         Intent intent = new Intent(this, MyService.class);

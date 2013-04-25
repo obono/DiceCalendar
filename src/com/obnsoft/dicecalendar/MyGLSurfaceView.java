@@ -44,14 +44,19 @@ public class MyGLSurfaceView extends GLSurfaceView {
     private static final int COEFFICIENT_FLING = 4;
     private static final int COEFFICIENT_DUR_SCRL = 10;
 
+    private static final int GRD_INTERPOL = 1024;
+    private static final int DUR_INTERPOL = 500;
+
     private CubesState  mState;
     private MyRenderer  mRenderer;
     private Scroller    mScroller;
+    private Scroller    mInterpolator;
     private VelocityTracker mTracker;
 
+    private boolean mZoomMode;
+    private boolean mMoveMode;
     private float   mTouchX;
     private float   mTouchY;
-    private boolean mMoveMode;
     private int     mRotateMode;
     private int     mRotateDeg;
 
@@ -59,9 +64,11 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     public MyGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mZoomMode = false;
         mMoveMode = false;
         mRotateMode = ROTATE_NONE;
         mScroller = new Scroller(context);
+        mInterpolator = new Scroller(context);
     }
 
     public void setCubesState(CubesState state) {
@@ -93,8 +100,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 mTracker = null;
             }
         }
-        boolean ret = (mState.isZooming) ?
-                handleRotation(action, x, y) : handlePosition(action, x, y);
+        boolean ret = mZoomMode ? handleRotation(action, x, y) : handlePosition(action, x, y);
         if (ret) {
             requestRender();
         }
@@ -103,18 +109,44 @@ public class MyGLSurfaceView extends GLSurfaceView {
 
     @Override
     public void computeScroll() {
-        if (mRotateMode != ROTATE_NONE && mState.focusCube != null) {
-            if (mScroller.computeScrollOffset()) {
+        boolean toInvalidate = false;
+        if (mScroller.computeScrollOffset()) {
+            if (mRotateMode != ROTATE_NONE && mState.focusCube != null) {
                 float deg = mScroller.getCurrX() - mRotateDeg;
                 rotateCube(mState.focusCube, mRotateMode, deg);
                 mRotateDeg = mScroller.getCurrX();
-                postInvalidate();
-            } else {
-                mState.focusCube.alignPositionDegrees();
-                mRotateMode = ROTATE_NONE;
+                if (mScroller.isFinished()) {
+                    mState.focusCube.alignPositionDegrees();
+                    mRotateMode = ROTATE_NONE;
+                } else {
+                    toInvalidate = true;
+                }
             }
-            requestRender();
         }
+        if (mInterpolator.computeScrollOffset()) {
+            float val = mInterpolator.getCurrX() / (float) GRD_INTERPOL;
+            mRenderer.setInterpolation(val);
+            toInvalidate = !mInterpolator.isFinished();
+            if (!mZoomMode && val == 0f) {
+                mState.focusCube = null;
+                toInvalidate = false;
+            }
+        }
+        requestRender();
+        if (toInvalidate) {
+            postInvalidate();
+        }
+    }
+
+    public void regulate() {
+        mScroller.abortAnimation();
+        mInterpolator.abortAnimation();
+        mZoomMode = false;
+        mMoveMode = false;
+        mRotateMode = ROTATE_NONE;
+        mState.alignCubes();
+        mState.focusCube = null;
+        mRenderer.setInterpolation(0f);
     }
 
     /*-----------------------------------------------------------------------*/
@@ -128,6 +160,10 @@ public class MyGLSurfaceView extends GLSurfaceView {
             if (Math.abs(y) <= THETA_BASE) {
                 for (CubesState.Cube cube : mState.cubes) {
                     if (Math.abs(cube.pos - pos) <= THETA_POS) {
+                        if (!mInterpolator.isFinished()) {
+                            mInterpolator.abortAnimation();
+                            mRenderer.setInterpolation(0f);
+                        }
                         mState.focusCube = cube;
                         mMoveMode = false;
                         ret = true;
@@ -179,7 +215,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
                     mState.focusCube = null;
                     mMoveMode = false;
                 } else if (action == MotionEvent.ACTION_UP) {
-                    mState.isZooming = true;
+                    mZoomMode = true;
+                    mInterpolator.startScroll(0, 0, GRD_INTERPOL, 0, DUR_INTERPOL);
+                    postInvalidate();
                 } else {
                     mState.focusCube = null;
                 }
@@ -225,8 +263,9 @@ public class MyGLSurfaceView extends GLSurfaceView {
             break;
         case MotionEvent.ACTION_UP:
             if (mRotateMode == ROTATE_NONE) {
-                mState.isZooming = false;
-                mState.focusCube = null;
+                mZoomMode = false;
+                mInterpolator.startScroll(GRD_INTERPOL, 0, -GRD_INTERPOL, 0, DUR_INTERPOL);
+                postInvalidate();
                 ret = true;
             } else {
                 float velDeg = calcDegreesToRotate(mRotateMode, mTouchX, mTouchY, x, y);
