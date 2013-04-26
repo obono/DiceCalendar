@@ -156,6 +156,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
         mState.alignCubes();
         mState.focusCube = null;
         mRenderer.setInterpolation(0f);
+        mRenderer.setToReloadTexture();
     }
 
     /*-----------------------------------------------------------------------*/

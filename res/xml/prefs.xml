@@ -6,6 +6,13 @@
         android:summary="@string/prefs_auto_sub"
         android:defaultValue="true"
         />
+    <ListPreference
+        android:key="texture"
+        android:defaultValue="default"
+        android:title="@string/prefs_texture"
+        android:entries="@array/texture_entries"
+        android:entryValues="@array/texture_entryvalues"
+        />
     <Preference
         android:key="about"
         android:title="@string/prefs_about"

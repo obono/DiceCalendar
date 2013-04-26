@@ -33,13 +33,13 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
     private MyGLSurfaceView mGLView;
     private CubesState      mState;
+    private boolean         mStartingActivity;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,14 +62,19 @@ public class MainActivity extends Activity {
         mGLView = (MyGLSurfaceView) findViewById(R.id.glview);
         mState = ((MyApplication) getApplication()).getCubesState();
         mGLView.setCubesState(mState);
-        final ImageButton btnCompass = (ImageButton) findViewById(R.id.btn_compass);
-        final ImageButton btnToday = (ImageButton) findViewById(R.id.btn_today);
+
+        final View[] buttons = {
+            findViewById(R.id.btn_compass),
+            findViewById(R.id.btn_today),
+            findViewById(R.id.btn_prefs),
+        };
         mGLView.setOnZoomListener(new MyGLSurfaceView.OnZoomListener() {
             @Override
             public void onZoomModeChanged(boolean isZooming) {
-                int visibility = isZooming ? View.INVISIBLE : View.VISIBLE;
-                btnCompass.setVisibility(visibility);
-                btnToday.setVisibility(visibility);
+                int visibility = isZooming ? View.GONE : View.VISIBLE;
+                for (View v : buttons) {
+                    if (v != null) v.setVisibility(visibility);
+                }
             }
         });
     }
@@ -77,13 +82,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-
         mGLView.regulate();
         mState.save();
-
-        Intent intent = new Intent(this, MyService.class);
-        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_REFRESH);
-        startService(intent);
+        if (mStartingActivity) {
+            mStartingActivity = false;
+        } else {
+            MyApplication.refreshWidget(this);
+        }
     }
 
     /*-----------------------------------------------------------------------*/
@@ -99,6 +104,7 @@ public class MainActivity extends Activity {
     }
 
     public void onClickPrefs(View v) {
+        mStartingActivity = true;
         startActivity(new Intent(this, SettingActivity.class));
     }
 

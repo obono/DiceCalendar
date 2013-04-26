@@ -25,7 +25,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLUtils;
 
@@ -49,12 +48,12 @@ public class MyRenderer implements Renderer {
         -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  -1f,0f,0f,  // left
         0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   0f,1f,0f,   // top
     };
-    private static final float T0 = 52f / 512f;
-    private static final float T1 = 154f / 512f;
-    private static final float T2 = 256f / 512f;
-    private static final float T3 = 358f / 512f;
-    private static final float T4 = 460f / 512f;
-    private static final float TZ = 50f / 512f;
+    private static final float T0 = 26f / 256f;
+    private static final float T1 = 77f / 256f;
+    private static final float T2 = 128f / 256f;
+    private static final float T3 = 179f / 256f;
+    private static final float T4 = 230f / 256f;
+    private static final float TZ = 25f / 256f;
     private static final float[] TEXCOORDS = {
         T0-TZ, T4+TZ,   T0-TZ, T4-TZ,   T0+TZ, T4+TZ,   T0+TZ, T4-TZ, // cube0 Jan/Jul
         T0-TZ, T3+TZ,   T0-TZ, T3-TZ,   T0+TZ, T3+TZ,   T0+TZ, T3-TZ, // cube0 Feb/Aug
@@ -90,7 +89,8 @@ public class MyRenderer implements Renderer {
     private final FloatBuffer mTexCoordBuffer;
     private final FloatBuffer mNormalBuffer;
 
-    private float mInterpol = 0f;
+    private boolean mIsLoadedTexture = false;
+    private float   mInterpol = 0f;
 
     /*-----------------------------------------------------------------------*/
 
@@ -112,11 +112,8 @@ public class MyRenderer implements Renderer {
         int[] buffers = new int[1];
         gl.glGenTextures(1, buffers, 0);
         gl.glBindTexture(GL10.GL_TEXTURE_2D, buffers[0]);
-        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.texture);
-        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-        bitmap.recycle();
 
         gl.glEnable(GL10.GL_LIGHTING);
         gl.glEnable(GL10.GL_LIGHT0);
@@ -138,6 +135,7 @@ public class MyRenderer implements Renderer {
         gl.glFrustumf(-rangeX, rangeX, -rangeY, rangeY, 2f, 50f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
+        loadTexture();
     }
 
     @Override
@@ -165,6 +163,10 @@ public class MyRenderer implements Renderer {
         mInterpol = val;
     }
 
+    public void setToReloadTexture() {
+        mIsLoadedTexture = false;
+    }
+
     /*-----------------------------------------------------------------------*/
 
     private FloatBuffer getFloatBufferFromArray(float[] array) {
@@ -175,6 +177,15 @@ public class MyRenderer implements Renderer {
         ret.put(array);
         ret.position(0);
         return ret;
+    }
+
+    private void loadTexture() {
+        if (!mIsLoadedTexture) {
+            Bitmap bitmap = MyApplication.getTextureBitmap(mContext);
+            GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+            bitmap.recycle();
+            mIsLoadedTexture = true;
+        }
     }
 
     private void drawAllCubes(GL10 gl) {

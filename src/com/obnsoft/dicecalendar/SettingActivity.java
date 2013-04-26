@@ -16,8 +16,10 @@
 
 package com.obnsoft.dicecalendar;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -25,9 +27,17 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
+import android.provider.MediaStore;
+import android.widget.Toast;
 
 public class SettingActivity extends PreferenceActivity
         implements OnPreferenceClickListener, OnSharedPreferenceChangeListener {
+
+    private static final int REQUEST_ID_GALLERY = 1;
+
+    private boolean mStartingActivity;
+
+    /*-----------------------------------------------------------------------*/
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,11 +54,42 @@ public class SettingActivity extends PreferenceActivity
     }
 
     @Override
+    public void onUserLeaveHint(){
+        if (mStartingActivity) {
+            mStartingActivity = false;
+        } else {
+            MyApplication.refreshWidget(this);
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         SharedPreferences prefs = getPreferenceScreen().getSharedPreferences();
         prefs.unregisterOnSharedPreferenceChangeListener(this);
         ((MyApplication) getApplication()).getPrefsInSetting(prefs);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == REQUEST_ID_GALLERY) {
+            String path = null;
+            if (resultCode == RESULT_OK) {
+                Cursor cur = getContentResolver().query(intent.getData(),
+                        new String[] {MediaStore.Images.Media.DATA}, null, null, null);
+                cur.moveToNext();
+                path = cur.getString(0);
+            }
+            if (!MyApplication.setTexturePath(this, path)) {
+                ListPreference listPref =
+                        (ListPreference) findPreference(MyApplication.PREF_KEY_TEX);
+                listPref.setValue(MyApplication.PREF_VAL_TEX_DEFAULT);
+                listPref.setSummary(listPref.getEntry());
+                if (resultCode == RESULT_OK) {
+                    Toast.makeText(this, R.string.msg_invalid_texture, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
     }
 
     @Override
@@ -77,11 +118,19 @@ public class SettingActivity extends PreferenceActivity
 
     private void setSummary(String key) {
         Preference pref = findPreference(key);
-        if (key.equals("about")) {
+        if (MyApplication.PREF_KEY_ABOUT.equals(key)) {
             pref.setOnPreferenceClickListener(this);
         }
         if (pref instanceof ListPreference) {
-            pref.setSummary(((ListPreference) pref).getEntry());
+            ListPreference listPref = (ListPreference) pref;
+            pref.setSummary(listPref.getEntry());
+            if (MyApplication.PREF_KEY_TEX.equals(key) &&
+                    MyApplication.PREF_VAL_TEX_CUSTOM.equals(listPref.getValue())) {
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");
+                mStartingActivity = true;
+                startActivityForResult(intent, REQUEST_ID_GALLERY);
+            }
         }
         if (pref instanceof EditTextPreference) {
             pref.setSummary(((EditTextPreference) pref).getText());
