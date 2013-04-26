@@ -191,6 +191,7 @@ public class CubesState {
                 cube.pos = cube.type - 1.5f;
                 cube.degX = cube.degY = cube.degZ = 0f;
             }
+            arrangeToday();
             ret = true;
         } catch (IOException e) {
             e.printStackTrace();

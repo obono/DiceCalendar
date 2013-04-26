@@ -16,11 +16,7 @@
             android:name=".MainActivity"
             android:label="@string/title_main"
             android:configChanges="orientation"
-            >
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
+            />
         <activity
             android:name=".SettingActivity"
             android:label="@string/title_prefs"

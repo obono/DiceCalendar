@@ -23,8 +23,6 @@ import java.io.InputStreamReader;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -44,20 +42,6 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        /*  If the second (or more) widget is placed, exit immediately.  */
-        Intent intent = getIntent();
-        if (AppWidgetManager.ACTION_APPWIDGET_CONFIGURE.equals(intent.getAction())) {
-            setResult(RESULT_OK, new Intent().putExtras(intent.getExtras()));
-            AppWidgetManager awm = AppWidgetManager.getInstance(this);
-            ComponentName cns = new ComponentName(this, MyWidgetProviderSmall.class);
-            ComponentName cnl = new ComponentName(this, MyWidgetProviderLarge.class);
-            if (awm.getAppWidgetIds(cns).length + awm.getAppWidgetIds(cnl).length >= 2) {
-                finish();
-                return;
-            }
-        }
-
         setContentView(R.layout.main);
         mGLView = (MyGLSurfaceView) findViewById(R.id.glview);
         mState = ((MyApplication) getApplication()).getCubesState();
