@@ -23,6 +23,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.IBinder;
+import android.view.Display;
+import android.view.WindowManager;
 import android.widget.RemoteViews;
 
 public class MyService extends Service {
@@ -42,12 +44,17 @@ public class MyService extends Service {
         super.onStart(intent, startId);
 
         RemoteViews rv = new RemoteViews(getPackageName(), R.layout.widget);
-        PixelBuffer buffer = new PixelBuffer(512, 256);
         CubesState state = ((MyApplication) getApplication()).getCubesState();
         if (intent != null && REQUEST_ADJUST.equals(intent.getStringExtra(EXTRA_REQUEST))) {
             state.arrangeToday();
             state.save();
         }
+
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        Display disp = wm.getDefaultDisplay();
+        int size = Math.min(disp.getWidth(), disp.getHeight());
+        PixelBuffer buffer = new PixelBuffer(size, size / 2);
+
         MyRenderer renderer = new MyRenderer(this, state, true);
         buffer.setRenderer(renderer);
         Bitmap bitmap = buffer.getBitmap();

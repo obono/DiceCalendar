@@ -127,7 +127,7 @@ public class PixelBuffer {
 
     private EGLConfig chooseConfig() {
         int[] attribList = {
-            EGL10.EGL_DEPTH_SIZE,   24,
+            EGL10.EGL_DEPTH_SIZE,   8,
             EGL10.EGL_STENCIL_SIZE, 0,
             EGL10.EGL_RED_SIZE,     8,
             EGL10.EGL_GREEN_SIZE,   8,
@@ -143,11 +143,31 @@ public class PixelBuffer {
         if (configSize > 0) {
             EGLConfig[] configs = new EGLConfig[configSize];
             if (mEGL.eglChooseConfig(mEGLDisplay, attribList, configs, configSize, numConfig)) {
+                //listConfig(configs);
                 return configs[0]; // Best match is probably the first configuration
             }
         }
         return null;
     }
+
+    /*private void listConfig(EGLConfig[] configs) {
+        for (EGLConfig config : configs) {
+            int d, s, r, g, b, a;
+            d = getConfigAttrib(config, EGL10.EGL_DEPTH_SIZE);
+            s = getConfigAttrib(config, EGL10.EGL_STENCIL_SIZE);
+            r = getConfigAttrib(config, EGL10.EGL_RED_SIZE);
+            g = getConfigAttrib(config, EGL10.EGL_GREEN_SIZE);
+            b = getConfigAttrib(config, EGL10.EGL_BLUE_SIZE);
+            a = getConfigAttrib(config, EGL10.EGL_ALPHA_SIZE);
+            Log.i(TAG, "<d,s,r,g,b,a> = <" + d + "," + s + "," + 
+                    r + "," + g + "," + b + "," + a + ">");
+        }
+    }
+
+    private int getConfigAttrib(EGLConfig config, int attribute) {
+        int[] value = new int[1];
+        return mEGL.eglGetConfigAttrib(mEGLDisplay, config, attribute, value)? value[0] : 0;
+    }*/
 
     private void convertToBitmap(GL10 gl, Bitmap bitmap) {
         if (bitmap == null) {
