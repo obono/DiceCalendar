@@ -18,7 +18,6 @@ package com.obnsoft.dicecalendar;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 
 import android.app.AlarmManager;
 import android.app.Application;
@@ -39,13 +38,7 @@ public class MyApplication extends Application {
 
     private static final String PREF_KEY_AUTO = "auto";
     private static final String PREF_KEY_TEXPATH = "texture_path";
-    private static final HashMap<String, Integer> MAP_TEXTURE_ID = new HashMap<String, Integer>();
     private static final int MAX_SIZE_TEX = 1024;
-
-    static {
-        MAP_TEXTURE_ID.put(PREF_VAL_TEX_DEFAULT, R.drawable.texture);
-        MAP_TEXTURE_ID.put("negative", R.drawable.texture_negative);
-    };
 
     private CubesState      mState;
     private PendingIntent   mAlarmIntent;
@@ -82,27 +75,26 @@ public class MyApplication extends Application {
 
     public static Bitmap getTextureBitmap(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String texIdStr = prefs.getString(PREF_KEY_TEX, PREF_VAL_TEX_DEFAULT);
-        Integer texId = MAP_TEXTURE_ID.get(texIdStr);
-        int id = (texId != null) ? texId : R.drawable.texture;
-        String path = prefs.getString(PREF_KEY_TEXPATH, null);
-
+        String texId = prefs.getString(PREF_KEY_TEX, PREF_VAL_TEX_DEFAULT);
         Bitmap bitmap = null;
-        if (PREF_VAL_TEX_CUSTOM.equals(texIdStr) && path != null) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(path, options);
-            int width = options.outWidth;
-            if (isAvailableSize(width, options.outHeight)) {
-                if (width > MAX_SIZE_TEX) {
-                    options.inSampleSize = width / MAX_SIZE_TEX;
+        if (PREF_VAL_TEX_CUSTOM.equals(texId)) {
+            String path = prefs.getString(PREF_KEY_TEXPATH, null);
+            if (path != null) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(path, options);
+                int width = options.outWidth;
+                if (isAvailableSize(width, options.outHeight)) {
+                    if (width > MAX_SIZE_TEX) {
+                        options.inSampleSize = width / MAX_SIZE_TEX;
+                    }
+                    options.inJustDecodeBounds = false;
+                    bitmap = BitmapFactory.decodeFile(path, options);
                 }
-                options.inJustDecodeBounds = false;
-                bitmap = BitmapFactory.decodeFile(path, options);
             }
         }
         if (bitmap == null) {
-            bitmap = BitmapFactory.decodeResource(context.getResources(), id);
+            bitmap = DiceTexture.getTextureBitmap(context, texId);
         }
         return bitmap;
     }

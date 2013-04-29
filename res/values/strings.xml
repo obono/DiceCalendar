@@ -14,12 +14,14 @@
 
     <string-array name="texture_entries">
         <item>Default</item>
-        <item>Negative</item>
+        <item>Default(Pink)</item>
+        <item>Default(Lime)</item>
         <item>Custom</item>
     </string-array>
     <string-array name="texture_entryvalues" translatable="false">
         <item>default</item>
-        <item>negative</item>
+        <item>default_pink</item>
+        <item>default_lime</item>
         <item>custom</item>
     </string-array>
 </resources>

@@ -13,7 +13,8 @@
 
     <string-array name="texture_entries">
         <item>標準</item>
-        <item>ネガティブ</item>
+        <item>標準(紫)</item>
+        <item>標準(緑)</item>
         <item>カスタム</item>
     </string-array>
 </resources>
