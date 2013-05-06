@@ -13,8 +13,15 @@
 
     <string-array name="texture_entries">
         <item>標準</item>
-        <item>標準(紫)</item>
-        <item>標準(緑)</item>
+        <item>標準 (紫)</item>
+        <item>標準 (緑)</item>
+        <item>木 (松)</item>
+        <item>木 (ケヤキ)</item>
+        <item>木 (黒檀)</item>
+        <item>大理石 (白)</item>
+        <item>大理石 (緑)</item>
+        <item>和風 (雪輪・赤)</item>
+        <item>和風 (亀甲・紺)</item>
         <item>カスタム</item>
     </string-array>
 </resources>

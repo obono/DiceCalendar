@@ -14,14 +14,28 @@
 
     <string-array name="texture_entries">
         <item>Default</item>
-        <item>Default(Pink)</item>
-        <item>Default(Lime)</item>
+        <item>Default (Pink)</item>
+        <item>Default (Lime)</item>
+        <item>Wooden (Pine)</item>
+        <item>Wooden (Keyaki)</item>
+        <item>Wooden (Ebony)</item>
+        <item>Marble (White)</item>
+        <item>Marble (Green)</item>
+        <item>Kanji (Red)</item>
+        <item>Kanji (Blue)</item>
         <item>Custom</item>
     </string-array>
     <string-array name="texture_entryvalues" translatable="false">
         <item>default</item>
         <item>default_pink</item>
         <item>default_lime</item>
+        <item>wood_pine</item>
+        <item>wood_keyaki</item>
+        <item>wood_ebony</item>
+        <item>marble</item>
+        <item>marble_green</item>
+        <item>kanji_light</item>
+        <item>kanji_dark</item>
         <item>custom</item>
     </string-array>
 </resources>
