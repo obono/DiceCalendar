@@ -149,7 +149,7 @@ public class CubesState {
                 (wday == Calendar.SUNDAY) ? 2 : 0);
         int cubeTen, cubeOne;
         if (day % 10 <= 5) {
-            cubeTen = (day % 10 >= 3 || day >= 30 || cubes[1].pos > cubes[2].pos) ? 2 : 1;
+            cubeTen = (day < 30 && (day % 10 >= 3 || cubes[1].pos > cubes[2].pos)) ? 2 : 1;
             cubeOne = 3 - cubeTen;
             cubes[cubeTen].setDegreesByFaceAngle(day / 10, 0);
             cubes[cubeOne].setDegreesByFaceAngle(day % 10, 0);
