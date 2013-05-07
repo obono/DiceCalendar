@@ -16,6 +16,12 @@
 
 package com.obnsoft.dicecalendar;
 
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -24,6 +30,7 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
@@ -33,6 +40,8 @@ import android.widget.Toast;
 public class SettingActivity extends PreferenceActivity
         implements OnPreferenceClickListener, OnSharedPreferenceChangeListener {
 
+    private static final String PREF_KEY_AUTO = "auto";
+    private static final String PREF_KEY_ABOUT = "about";
     private static final int REQUEST_ID_GALLERY = 1;
 
     private boolean mStartingActivity;
@@ -43,6 +52,7 @@ public class SettingActivity extends PreferenceActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
+        findPreference(PREF_KEY_ABOUT).setOnPreferenceClickListener(this);
         setSummaries(getPreferenceScreen());
     }
 
@@ -67,7 +77,6 @@ public class SettingActivity extends PreferenceActivity
         super.onPause();
         SharedPreferences prefs = getPreferenceScreen().getSharedPreferences();
         prefs.unregisterOnSharedPreferenceChangeListener(this);
-        ((MyApplication) getApplication()).getPrefsInSetting(prefs);
     }
 
     @Override
@@ -100,7 +109,37 @@ public class SettingActivity extends PreferenceActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+        if (PREF_KEY_AUTO.equals(key)) {
+            setMidnightAlerm(this);
+        }
+        if (DiceTexture.PREF_KEY_TEX.equals(key) &&
+                DiceTexture.PREF_VAL_TEX_CUSTOM.equals(prefs.getString(key, null))) {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            mStartingActivity = true;
+            startActivityForResult(intent, REQUEST_ID_GALLERY);
+        }
         setSummary(key);
+    }
+
+    public static void setMidnightAlerm(Context context) {
+        Intent intent = new Intent(context, MyService.class);
+        intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_ADJUST);
+        PendingIntent pendingIntent = PendingIntent.getService(
+                context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if (prefs.getBoolean(PREF_KEY_AUTO, true)) {
+            Calendar calendar = new GregorianCalendar();
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            am.setInexactRepeating(AlarmManager.RTC,
+                    calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        } else {
+            am.cancel(pendingIntent);
+        }
     }
 
     /*-----------------------------------------------------------------------*/
@@ -118,19 +157,8 @@ public class SettingActivity extends PreferenceActivity
 
     private void setSummary(String key) {
         Preference pref = findPreference(key);
-        if (MyApplication.PREF_KEY_ABOUT.equals(key)) {
-            pref.setOnPreferenceClickListener(this);
-        }
         if (pref instanceof ListPreference) {
-            ListPreference listPref = (ListPreference) pref;
-            pref.setSummary(listPref.getEntry());
-            if (DiceTexture.PREF_KEY_TEX.equals(key) &&
-                    DiceTexture.PREF_VAL_TEX_CUSTOM.equals(listPref.getValue())) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                mStartingActivity = true;
-                startActivityForResult(intent, REQUEST_ID_GALLERY);
-            }
+            pref.setSummary(((ListPreference) pref).getEntry());
         }
         if (pref instanceof EditTextPreference) {
             pref.setSummary(((EditTextPreference) pref).getText());

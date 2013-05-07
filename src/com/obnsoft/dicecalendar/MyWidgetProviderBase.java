@@ -31,4 +31,14 @@ public abstract class MyWidgetProviderBase extends AppWidgetProvider {
         context.startService(intent);
     }
 
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+        String action = intent.getAction();
+        if (Intent.ACTION_TIME_CHANGED.equals(action) ||
+                Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
+            SettingActivity.setMidnightAlerm(context);
+        }
+    }
+
 }

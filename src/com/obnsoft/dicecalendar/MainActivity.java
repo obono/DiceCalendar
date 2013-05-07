@@ -29,6 +29,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -75,6 +76,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_UP &&
+                event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
+            onClickPrefs(null);
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
     /*-----------------------------------------------------------------------*/
 
     public void onClickCompass(View v) {
@@ -90,10 +101,7 @@ public class MainActivity extends Activity {
     public void onClickPrefs(View v) {
         mStartingActivity = true;
         startActivity(new Intent(this, SettingActivity.class));
-    }
-
-    public void onClickAbout(View v) {
-        showVersion(this);
+        //showVersion(this);
     }
 
     public static void showVersion(Context context) {
