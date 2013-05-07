@@ -182,7 +182,7 @@ public class MyRenderer implements Renderer {
 
     private void loadTexture() {
         if (!mIsLoadedTexture) {
-            Bitmap bitmap = MyApplication.getTextureBitmap(mContext);
+            Bitmap bitmap = DiceTexture.getTextureBitmap(mContext);
             GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
             bitmap.recycle();
             mIsLoadedTexture = true;

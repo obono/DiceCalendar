@@ -80,10 +80,10 @@ public class SettingActivity extends PreferenceActivity
                 cur.moveToNext();
                 path = cur.getString(0);
             }
-            if (!MyApplication.setTexturePath(this, path)) {
+            if (!DiceTexture.setTexturePath(this, path)) {
                 ListPreference listPref =
-                        (ListPreference) findPreference(MyApplication.PREF_KEY_TEX);
-                listPref.setValue(MyApplication.PREF_VAL_TEX_DEFAULT);
+                        (ListPreference) findPreference(DiceTexture.PREF_KEY_TEX);
+                listPref.setValue(DiceTexture.PREF_VAL_TEX_DEFAULT);
                 listPref.setSummary(listPref.getEntry());
                 if (resultCode == RESULT_OK) {
                     Toast.makeText(this, R.string.msg_invalid_texture, Toast.LENGTH_LONG).show();
@@ -124,8 +124,8 @@ public class SettingActivity extends PreferenceActivity
         if (pref instanceof ListPreference) {
             ListPreference listPref = (ListPreference) pref;
             pref.setSummary(listPref.getEntry());
-            if (MyApplication.PREF_KEY_TEX.equals(key) &&
-                    MyApplication.PREF_VAL_TEX_CUSTOM.equals(listPref.getValue())) {
+            if (DiceTexture.PREF_KEY_TEX.equals(key) &&
+                    DiceTexture.PREF_VAL_TEX_CUSTOM.equals(listPref.getValue())) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType("image/*");
                 mStartingActivity = true;
