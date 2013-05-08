@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import android.app.AlarmManager;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -35,8 +36,6 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.provider.MediaStore;
-import android.view.Display;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -46,6 +45,7 @@ public class SettingActivity extends PreferenceActivity
     private static final String PREF_KEY_AUTO = "auto";
     private static final String PREF_KEY_ABOUT = "about";
     private static final int REQUEST_ID_GALLERY = 1;
+    private static final int DIALOG_ID_ABOUT = 1;
 
     private boolean mStartingActivity;
     private ImageView mTexPreview;
@@ -56,20 +56,10 @@ public class SettingActivity extends PreferenceActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.setting);
         addPreferencesFromResource(R.xml.prefs);
         findPreference(PREF_KEY_ABOUT).setOnPreferenceClickListener(this);
-
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        Display disp = wm.getDefaultDisplay();
-        int size = Math.min(disp.getWidth(), disp.getHeight()) / 2;
-        int padding = size / 16;
-        mTexPreview = new ImageView(this);
-        mTexPreview.setMaxWidth(size);
-        mTexPreview.setMaxHeight(size);
-        mTexPreview.setPadding(padding, padding, padding, padding);
-        mTexPreview.setAdjustViewBounds(true);
-        getListView().addHeaderView(mTexPreview, null, false);
-
+        mTexPreview = (ImageView) findViewById(R.id.img_texpreview);
         setSummaries(getPreferenceScreen());
         setTexturePreview();
     }
@@ -128,8 +118,19 @@ public class SettingActivity extends PreferenceActivity
     }
 
     @Override
+    protected Dialog onCreateDialog(int id) {
+        Dialog dialog = null;
+        switch (id) {
+        case DIALOG_ID_ABOUT:
+            dialog = MainActivity.createVersionDialog(this);
+            break;
+        }
+        return dialog;
+    }
+
+    @Override
     public boolean onPreferenceClick(Preference pref) {
-        MainActivity.showVersion(this);
+        showDialog(DIALOG_ID_ABOUT);
         return true;
     }
 

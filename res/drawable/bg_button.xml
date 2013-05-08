@@ -8,7 +8,7 @@
                 android:type="linear"
                 android:angle="315"
                 />
-            <stroke android:width="4dip" android:color="#E369" />
+            <stroke android:width="4dp" android:color="#E369" />
             <size android:width="64dp" android:height="64dp" />
         </shape>
     </item>
@@ -20,7 +20,7 @@
                 android:type="linear"
                 android:angle="315"
                 />
-            <stroke android:width="4dip" android:color="#E69C" />
+            <stroke android:width="4dp" android:color="#E69C" />
             <size android:width="64dp" android:height="64dp" />
         </shape>
     </item>

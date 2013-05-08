@@ -10,8 +10,8 @@
     >
     <TextView
         android:text="@string/app_code"
-        android:layout_marginTop="4dip"
-        android:layout_marginLeft="8dip"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         />
@@ -25,7 +25,7 @@
     <TextView
         android:id="@+id/text_about_version"
         android:gravity="right"
-        android:layout_marginRight="8dip"
+        android:layout_marginRight="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         />
@@ -37,7 +37,7 @@
         />
     <ImageView
         android:layout_width="match_parent"
-        android:layout_height="1dip"
+        android:layout_height="1dp"
         android:src="@android:drawable/divider_horizontal_dark"
         android:scaleType="fitXY"
         android:gravity="fill_horizontal"
@@ -45,9 +45,9 @@
     <TextView
         android:id="@+id/text_about_message"
         android:autoLink="web"
-        android:layout_marginTop="4dip"
-        android:layout_marginLeft="8dip"
-        android:layout_marginRight="8dip"
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@android:color/secondary_text_dark_nodisable"

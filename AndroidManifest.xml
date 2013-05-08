@@ -20,11 +20,9 @@
         <activity
             android:name=".SettingActivity"
             android:label="@string/title_prefs"
-            android:configChanges="orientation"
             />
         <receiver
             android:name=".MyWidgetProviderSmall"
-            android:icon="@drawable/preview_small"
             android:label="@string/widget_small"
             >
             <intent-filter>
@@ -37,7 +35,6 @@
         </receiver>
         <receiver
             android:name=".MyWidgetProviderLarge"
-            android:icon="@drawable/preview_large"
             android:label="@string/widget_large"
             >
             <intent-filter>
@@ -56,7 +53,6 @@
             android:exported="false"
             >
         </service>
-        
     </application>
 
 </manifest>

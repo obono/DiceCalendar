@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -101,10 +102,10 @@ public class MainActivity extends Activity {
     public void onClickPrefs(View v) {
         mStartingActivity = true;
         startActivity(new Intent(this, SettingActivity.class));
-        //showVersion(this);
+        //createVersionDialog(this).show();
     }
 
-    public static void showVersion(Context context) {
+    public static Dialog createVersionDialog(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View aboutView = inflater.inflate(R.layout.about, null);
         try {
@@ -127,12 +128,12 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        new AlertDialog.Builder(context)
+        return new AlertDialog.Builder(context)
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .setTitle(R.string.prefs_about)
                 .setView(aboutView)
                 .setPositiveButton(android.R.string.ok, null)
-                .show();
+                .create();
     }
 
 }
