@@ -39,6 +39,7 @@ public class DiceTexture {
     private static final ITextureDrawer DEFAULT_TEXTURE = new Default(0x333399FF);
 
     private static final String PREF_KEY_TEXPATH = "texture_path";
+    private static final int PRESET_SIZE_TEX = 512;
     private static final int MAX_SIZE_TEX = 1024;
 
     static {
@@ -77,7 +78,8 @@ public class DiceTexture {
         if (bitmap == null) {
             ITextureDrawer texture = MAP.get(texId);
             if (texture == null) texture = DEFAULT_TEXTURE;
-            bitmap = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888);
+            bitmap = Bitmap.createBitmap(
+                    PRESET_SIZE_TEX, PRESET_SIZE_TEX, Bitmap.Config.ARGB_8888);
             texture.draw(context, new Canvas(bitmap));
         }
         return bitmap;
@@ -100,7 +102,7 @@ public class DiceTexture {
     }
 
     private static boolean isAvailableSize(int width, int height) {
-        return (width != 0 && width == height && (width & (width - 1)) == 0);
+        return (width > 0 && width == height && (width & (width - 1)) == 0);
     }
 
     private static void tileImage(Context context, int drawableId, Canvas canvas, Paint paint) {

@@ -26,8 +26,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
@@ -35,6 +35,9 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.provider.MediaStore;
+import android.view.Display;
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 public class SettingActivity extends PreferenceActivity
@@ -45,6 +48,8 @@ public class SettingActivity extends PreferenceActivity
     private static final int REQUEST_ID_GALLERY = 1;
 
     private boolean mStartingActivity;
+    private ImageView mTexPreview;
+    private Bitmap mTexBitmap;
 
     /*-----------------------------------------------------------------------*/
 
@@ -53,7 +58,20 @@ public class SettingActivity extends PreferenceActivity
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
         findPreference(PREF_KEY_ABOUT).setOnPreferenceClickListener(this);
+
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        Display disp = wm.getDefaultDisplay();
+        int size = Math.min(disp.getWidth(), disp.getHeight()) / 2;
+        int padding = size / 16;
+        mTexPreview = new ImageView(this);
+        mTexPreview.setMaxWidth(size);
+        mTexPreview.setMaxHeight(size);
+        mTexPreview.setPadding(padding, padding, padding, padding);
+        mTexPreview.setAdjustViewBounds(true);
+        getListView().addFooterView(mTexPreview, null, false);
+
         setSummaries(getPreferenceScreen());
+        setTexturePreview();
     }
 
     @Override
@@ -64,7 +82,7 @@ public class SettingActivity extends PreferenceActivity
     }
 
     @Override
-    public void onUserLeaveHint(){
+    public void onUserLeaveHint() {
         if (mStartingActivity) {
             mStartingActivity = false;
         } else {
@@ -80,6 +98,12 @@ public class SettingActivity extends PreferenceActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        clearTExturePreview();
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_ID_GALLERY) {
             String path = null;
@@ -88,6 +112,7 @@ public class SettingActivity extends PreferenceActivity
                         new String[] {MediaStore.Images.Media.DATA}, null, null, null);
                 cur.moveToNext();
                 path = cur.getString(0);
+                cur.close();
             }
             if (!DiceTexture.setTexturePath(this, path)) {
                 ListPreference listPref =
@@ -98,6 +123,7 @@ public class SettingActivity extends PreferenceActivity
                     Toast.makeText(this, R.string.msg_invalid_texture, Toast.LENGTH_LONG).show();
                 }
             }
+            setTexturePreview();
         }
     }
 
@@ -111,15 +137,18 @@ public class SettingActivity extends PreferenceActivity
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
         if (PREF_KEY_AUTO.equals(key)) {
             setMidnightAlerm(this);
+        } else if (DiceTexture.PREF_KEY_TEX.equals(key)) {
+            if (DiceTexture.PREF_VAL_TEX_CUSTOM.equals(prefs.getString(key, null))) {
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");
+                mStartingActivity = true;
+                startActivityForResult(intent, REQUEST_ID_GALLERY);
+            } else {
+                setTexturePreview();
+            }
+        } else {
+            setSummary(key);
         }
-        if (DiceTexture.PREF_KEY_TEX.equals(key) &&
-                DiceTexture.PREF_VAL_TEX_CUSTOM.equals(prefs.getString(key, null))) {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            mStartingActivity = true;
-            startActivityForResult(intent, REQUEST_ID_GALLERY);
-        }
-        setSummary(key);
     }
 
     public static void setMidnightAlerm(Context context) {
@@ -160,8 +189,21 @@ public class SettingActivity extends PreferenceActivity
         if (pref instanceof ListPreference) {
             pref.setSummary(((ListPreference) pref).getEntry());
         }
-        if (pref instanceof EditTextPreference) {
-            pref.setSummary(((EditTextPreference) pref).getText());
+    }
+
+    private void setTexturePreview() {
+        if (mTexBitmap != null) {
+            clearTExturePreview();
+        }
+        mTexBitmap = DiceTexture.getTextureBitmap(this);
+        mTexPreview.setImageBitmap(mTexBitmap);
+    }
+
+    private void clearTExturePreview() {
+        if (mTexBitmap != null) {
+            mTexPreview.setImageBitmap(null);
+            mTexBitmap.recycle();
+            mTexBitmap = null;
         }
     }
 
