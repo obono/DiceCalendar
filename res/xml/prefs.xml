@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
-        android:key="auto"
-        android:title="@string/prefs_auto"
-        android:summary="@string/prefs_auto_sub"
-        android:defaultValue="true"
-        />
     <ListPreference
         android:key="texture"
         android:defaultValue="default"
         android:title="@string/prefs_texture"
         android:entries="@array/texture_entries"
         android:entryValues="@array/texture_entryvalues"
+        />
+    <CheckBoxPreference
+        android:key="auto"
+        android:title="@string/prefs_auto"
+        android:summary="@string/prefs_auto_sub"
+        android:defaultValue="true"
         />
     <Preference
         android:key="about"

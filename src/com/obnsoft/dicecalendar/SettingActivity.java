@@ -68,7 +68,7 @@ public class SettingActivity extends PreferenceActivity
         mTexPreview.setMaxHeight(size);
         mTexPreview.setPadding(padding, padding, padding, padding);
         mTexPreview.setAdjustViewBounds(true);
-        getListView().addFooterView(mTexPreview, null, false);
+        getListView().addHeaderView(mTexPreview, null, false);
 
         setSummaries(getPreferenceScreen());
         setTexturePreview();
@@ -135,9 +135,8 @@ public class SettingActivity extends PreferenceActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-        if (PREF_KEY_AUTO.equals(key)) {
-            setMidnightAlerm(this);
-        } else if (DiceTexture.PREF_KEY_TEX.equals(key)) {
+        if (DiceTexture.PREF_KEY_TEX.equals(key)) {
+            setSummary(key);
             if (DiceTexture.PREF_VAL_TEX_CUSTOM.equals(prefs.getString(key, null))) {
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType("image/*");
@@ -146,8 +145,8 @@ public class SettingActivity extends PreferenceActivity
             } else {
                 setTexturePreview();
             }
-        } else {
-            setSummary(key);
+        } else if (PREF_KEY_AUTO.equals(key)) {
+            setMidnightAlerm(this);
         }
     }
 
