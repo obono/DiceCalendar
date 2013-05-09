@@ -36,6 +36,7 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.provider.MediaStore;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -90,7 +91,7 @@ public class SettingActivity extends PreferenceActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        clearTExturePreview();
+        clearTexturePreview();
     }
 
     @Override
@@ -151,6 +152,10 @@ public class SettingActivity extends PreferenceActivity
         }
     }
 
+    public void onClickPreview(View v) {
+        getListView().performItemClick(v, 0/* position of 'Texture' item*/, 0);
+    }
+
     public static void setMidnightAlerm(Context context) {
         Intent intent = new Intent(context, MyService.class);
         intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_ADJUST);
@@ -193,13 +198,13 @@ public class SettingActivity extends PreferenceActivity
 
     private void setTexturePreview() {
         if (mTexBitmap != null) {
-            clearTExturePreview();
+            clearTexturePreview();
         }
         mTexBitmap = DiceTexture.getTextureBitmap(this);
         mTexPreview.setImageBitmap(mTexBitmap);
     }
 
-    private void clearTExturePreview() {
+    private void clearTexturePreview() {
         if (mTexBitmap != null) {
             mTexPreview.setImageBitmap(null);
             mTexBitmap.recycle();

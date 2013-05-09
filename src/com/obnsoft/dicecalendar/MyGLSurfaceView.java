@@ -147,6 +147,18 @@ public class MyGLSurfaceView extends GLSurfaceView {
         }
     }
 
+    public void cancelZooming() {
+        if (mZoomMode) {
+            mScroller.abortAnimation();
+            setZoomMode(false);
+            mState.focusCube.alignPositionDegrees();
+            mRotateMode = ROTATE_NONE;
+            mInterpolator.startScroll(GRD_INTERPOL, 0, -GRD_INTERPOL, 0, DUR_INTERPOL);
+            requestRender();
+            postInvalidate();
+        }
+    }
+
     public void regulate() {
         mScroller.abortAnimation();
         mInterpolator.abortAnimation();

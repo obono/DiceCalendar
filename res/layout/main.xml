@@ -16,6 +16,7 @@
         android:layout_alignParentLeft="true"
         android:background="@drawable/bg_button"
         android:src="@android:drawable/ic_menu_compass"
+        android:tint="#669C"
         android:onClick="onClickCompass"
         />
     <ImageButton
@@ -26,6 +27,7 @@
         android:layout_centerHorizontal="true"
         android:background="@drawable/bg_button"
         android:src="@android:drawable/ic_menu_today"
+        android:tint="#669C"
         android:onClick="onClickToday"
         />
     <ImageButton
@@ -36,6 +38,7 @@
         android:layout_alignParentRight="true"
         android:background="@drawable/bg_button"
         android:src="@android:drawable/ic_menu_preferences"
+        android:tint="#669C"
         android:onClick="onClickPrefs"
         />
 </RelativeLayout>

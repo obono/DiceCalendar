@@ -5,7 +5,7 @@
     <string name="title_prefs">設定 - サイコロカレンダー</string>
     <string name="widget_small">サイコロカレンダー(小)</string>
     <string name="widget_large">サイコロカレンダー(大)</string>
-    <string name="prefs_auto">自動配置</string>
+    <string name="prefs_auto">日付の自動更新</string>
     <string name="prefs_auto_sub">毎晩深夜にサイコロの向きを変えます</string>
     <string name="prefs_texture">テクスチャ</string>
     <string name="prefs_about">バージョン情報</string>

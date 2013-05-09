@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
 
     private MyGLSurfaceView mGLView;
     private CubesState      mState;
+    private boolean         mIsZooming;
     private boolean         mStartingActivity;
 
     @Override
@@ -57,6 +58,7 @@ public class MainActivity extends Activity {
         mGLView.setOnZoomListener(new MyGLSurfaceView.OnZoomListener() {
             @Override
             public void onZoomModeChanged(boolean isZooming) {
+                mIsZooming = isZooming;
                 int visibility = isZooming ? View.GONE : View.VISIBLE;
                 for (View v : buttons) {
                     if (v != null) v.setVisibility(visibility);
@@ -79,10 +81,21 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_UP &&
-                event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
-            onClickPrefs(null);
-            return true;
+        switch (event.getKeyCode()) {
+        case KeyEvent.KEYCODE_MENU:
+            if (!mIsZooming && event.getAction() == KeyEvent.ACTION_UP) {
+                onClickPrefs(null);
+                return true;
+            }
+            break;
+        case KeyEvent.KEYCODE_BACK:
+            if (mIsZooming) {
+                if (event.getAction() == KeyEvent.ACTION_UP) {
+                    mGLView.cancelZooming();
+                }
+                return true;
+            }
+            break;
         }
         return super.dispatchKeyEvent(event);
     }
