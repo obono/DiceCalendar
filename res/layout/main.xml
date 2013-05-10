@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
+    android:id="@+id/view_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <com.obnsoft.dicecalendar.MyGLSurfaceView
+        android:id="@+id/glview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+    <com.google.ads.AdView
+        android:id="@+id/ad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        ads:adUnitId="a1518ba80419700"
+        ads:adSize="BANNER"
+        ads:testDevices="TEST_EMULATOR"
+        ads:loadAdOnCreate="true"
+        />
+    <ImageButton
+        android:id="@+id/btn_compass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:background="@drawable/bg_button"
+        android:src="@android:drawable/ic_menu_compass"
+        android:tint="#669C"
+        android:onClick="onClickCompass"
+        />
+    <ImageButton
+        android:id="@+id/btn_prefs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/bg_button"
+        android:src="@android:drawable/ic_menu_info_details"
+        android:tint="#669C"
+        android:onClick="onClickPrefs"
+        />
+</RelativeLayout>

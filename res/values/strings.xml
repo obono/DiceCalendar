@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_code" translatable="false">OBN-A13f</string>
+    <string name="app_name">Dice Calendar Free</string>
+    <string name="title_main">Dice Calendar - Free version</string>
+    <string name="widget_small">Dice Calendar Free (Small)</string>
+    <string name="widget_large">Dice Calendar Free (Large)</string>
+    <string name="prefs_about">Version information</string>
+    <string name="btn_nonfree">Buy non-free ver.</string>
+    <string name="thank_you">Thank you for buying non-free version!\nNow uninstall free version, please.</string>
+</resources>

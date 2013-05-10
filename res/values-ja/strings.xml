@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">サイコロカレンダー無料版</string>
+    <string name="title_main">サイコロカレンダー - 無料版</string>
+    <string name="widget_small">サイコロカレンダー無料版(小)</string>
+    <string name="widget_large">サイコロカレンダー無料版(大)</string>
+    <string name="prefs_about">バージョン情報</string>
+    <string name="btn_nonfree">有料版を購入</string>
+    <string name="thank_you">有料版のご購入ありがとうございます!\n無料版はアンインストールしてください。</string>
+</resources>
