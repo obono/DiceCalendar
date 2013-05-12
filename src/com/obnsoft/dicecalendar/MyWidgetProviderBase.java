@@ -26,6 +26,7 @@ public abstract class MyWidgetProviderBase extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager awm, int[] awi) {
         super.onUpdate(context, awm, awi);
+        SettingActivity.setMidnightAlerm(context);
         Intent intent = new Intent(context, MyService.class);
         intent.putExtra(MyService.EXTRA_REQUEST, MyService.REQUEST_UPDATE);
         context.startService(intent);

@@ -28,7 +28,6 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mState = new CubesState(this);
-        SettingActivity.setMidnightAlerm(this);
     }
 
     public CubesState getCubesState() {
